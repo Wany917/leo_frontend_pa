@@ -43,22 +43,59 @@ export default function EditAnnouncementPage() {
         
         if (response.ok) {
           const data = await response.json();
+          const annonceData = data.annonce || data; // Adaptation au format de l'API
+          
+          console.log("Données annonce reçues:", annonceData);
+          
+          // Extraire les informations de taille, poids et quantité depuis la description
+          let packageSize = "Medium"; // Valeur par défaut
+          let weight = "2.5"; // Valeur par défaut
+          let amount = "1"; // Valeur par défaut
+          
+          if (annonceData.description) {
+            // Rechercher les motifs dans la description
+            const sizeMatch = annonceData.description.match(/Package Size: (\w+)/);
+            if (sizeMatch && sizeMatch[1]) {
+              packageSize = sizeMatch[1];
+            }
+            
+            const weightMatch = annonceData.description.match(/Weight: ([\d.]+) kg/);
+            if (weightMatch && weightMatch[1]) {
+              weight = weightMatch[1];
+            }
+            
+            const amountMatch = annonceData.description.match(/Amount: (\d+)/);
+            if (amountMatch && amountMatch[1]) {
+              amount = amountMatch[1];
+            }
+            
+            console.log("Extracted from description:", { packageSize, weight, amount });
+          }
+          
           // Mise à jour des données du formulaire avec les valeurs reçues de l'API
           setAnnouncement({
-            title: data.title || "Untitled Announcement",
-            deliveryAddress: data.destination_address || "",
-            price: data.price?.toString() || "0",
-            deliveryDate: data.scheduled_date ? 
-              new Date(data.scheduled_date).toISOString().split('T')[0] : 
-              "2025-05-15",
-            amount: data.amount?.toString() || "1",
-            storageBox: data.storage_box || "Storage box 1",
-            packageSize: data.colis?.length > 0 ? data.colis[0].size || "Medium" : "Medium",
-            weight: data.colis?.length > 0 ? data.colis[0].weight?.toString() || "2.5" : "2.5",
-            priorityShipping: data.priority || false,
+            title: annonceData.title || "Untitled Announcement",
+            deliveryAddress: annonceData.destinationAddress || "",
+            price: annonceData.price?.toString() || "0",
+            deliveryDate: annonceData.scheduledDate ? 
+              new Date(annonceData.scheduledDate).toISOString().split('T')[0] : 
+              new Date().toISOString().split('T')[0],
+            amount: amount, // Utiliser la valeur extraite
+            storageBox: annonceData.storageBoxId ? `Storage box ${annonceData.storageBoxId}` : "Storage box 1",
+            packageSize: packageSize, // Utiliser la valeur extraite
+            weight: weight, // Utiliser la valeur extraite
+            priorityShipping: annonceData.priority || false,
           });
           
-          // Si une image est disponible, on pourrait faire un autre appel pour la récupérer
+          // Si une image est disponible, construire l'URL complète
+          if (annonceData.imagePath) {
+            const imageUrl = annonceData.imagePath.startsWith('http') 
+              ? annonceData.imagePath 
+              : `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}`;
+            
+            console.log("Image URL constructed:", imageUrl);
+            setImagePreview(imageUrl);
+          }
         } else {
           console.error("Error fetching announcement:", await response.text());
         }
@@ -98,26 +135,53 @@ export default function EditAnnouncementPage() {
       formData.append("destination_address", announcement.deliveryAddress)
       formData.append("price", announcement.price)
       
-      // Correction du format de date pour respecter le format attendu par le backend
-      const dateObj = new Date(announcement.deliveryDate)
-      const formattedDate = dateObj.toISOString(); // Format ISO standard
-      formData.append("scheduled_date", formattedDate)
+      // Utiliser directement le format YYYY-MM-DD de l'input HTML
+      // Le backend devrait interpréter ce format correctement
+      if (announcement.deliveryDate) {
+        // Ne pas faire de conversion, envoyer directement la valeur
+        console.log("Date envoyée (YYYY-MM-DD):", announcement.deliveryDate);
+        formData.append("scheduled_date", announcement.deliveryDate);
+      }
       
-      // Ces champs ne sont pas tous directement pris en charge par l'API, mais on peut les envoyer
-      // comme métadonnées dans la description ou les gérer côté serveur
-      formData.append("amount", announcement.amount)
-      formData.append("storage_box", announcement.storageBox)
-      formData.append("package_size", announcement.packageSize)
-      formData.append("weight", announcement.weight)
+      // Gestion du box de stockage
+      if (announcement.storageBox && announcement.storageBox.includes("Storage box")) {
+        const boxId = announcement.storageBox.replace("Storage box ", "").trim();
+        if (!isNaN(Number(boxId))) {
+          formData.append("storage_box_id", boxId);
+        }
+      }
+      
+      // Priorité d'expédition
       formData.append("priority", announcement.priorityShipping.toString())
+      
+      // Description détaillée avec les informations du colis
+      const description = `Package Size: ${announcement.packageSize}
+Weight: ${announcement.weight} kg
+Amount: ${announcement.amount}`;
+      formData.append("description", description)
+      
+      console.log("Données formulaire envoyées:", {
+        title: announcement.title,
+        price: announcement.price,
+        scheduledDate: announcement.deliveryDate,
+        destination: announcement.deliveryAddress,
+        storageBox: announcement.storageBox,
+        priority: announcement.priorityShipping,
+        description: description,
+        hasImage: !!image
+      });
 
       // Ajout de l'image si disponible
       if (image) {
+        console.log("Ajout de l'image au formulaire:", image.name, image.type, image.size);
         formData.append("image", image)
+      } else {
+        console.log("Aucune nouvelle image n'a été sélectionnée");
       }
 
       // Envoi de la requête PUT pour mettre à jour l'annonce
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}`, {
+      // Utilisation de la route spéciale qui accepte les dates au format YYYY-MM-DD
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}/with-string-dates`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -154,10 +218,18 @@ export default function EditAnnouncementPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      console.log("Image sélectionnée:", file.name, file.type, file.size);
       setImage(file)
+      
+      // Créer un aperçu de l'image
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
+        const preview = reader.result as string;
+        console.log("Aperçu d'image généré");
+        setImagePreview(preview)
+      }
+      reader.onerror = (error) => {
+        console.error("Erreur lors de la lecture de l'image:", error);
       }
       reader.readAsDataURL(file)
     }

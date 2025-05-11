@@ -16,8 +16,9 @@ interface AddressSuggestion {
 
 export default function CreateAnnouncementPage() {
   const { t } = useLanguage()
+  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Détails des colis
+  const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Date de livraison, Étape 4: Contenu des colis
   const [packageCount, setPackageCount] = useState(1)
   const [currentPackage, setCurrentPackage] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +42,7 @@ export default function CreateAnnouncementPage() {
   const [packageName, setPackageName] = useState("")
   const [packageSize, setPackageSize] = useState("Medium")
   const [packageWeight, setPackageWeight] = useState("1")
-  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null)
+  const [deliveryDate, setDeliveryDate] = useState("")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
 
   // Refs pour les dropdowns
@@ -55,8 +56,6 @@ export default function CreateAnnouncementPage() {
       imagePreview: null,
     },
   ])
-
-  const router = useRouter()
 
   // Effet pour gérer les clics en dehors des suggestions
   useEffect(() => {
@@ -209,7 +208,7 @@ export default function CreateAnnouncementPage() {
       }
       
       const userData = await userResponse.json();
-      const utilisateurId = userData.id;
+      const utilisateur_id = userData.id;
 
       console.log("Préparation des données du formulaire");
       
@@ -217,7 +216,7 @@ export default function CreateAnnouncementPage() {
       const formData = new FormData();
       
       // Données utilisateur et générales
-      formData.append("utilisateur_id", utilisateurId.toString());
+      formData.append("utilisateur_id", utilisateur_id.toString());
       formData.append("title", finalTitle);
       formData.append("price", price ? price.toString() : "0");
       
@@ -227,13 +226,27 @@ export default function CreateAnnouncementPage() {
       
       // Dates
       if (deliveryDate) {
-        const formattedDate = deliveryDate.toISOString();
-        console.log("Date de livraison formatée:", formattedDate);
-        formData.append("scheduled_date", formattedDate);
+        formData.append("scheduled_date", deliveryDate);
       }
 
-      // Note pour packSize - s'assurer qu'il est correct
-      formData.append("description", `Package Name: ${packageName}\nPackage Size: ${packageSize}\nPackage Weight: ${packageWeight}\nAdditional Notes: ${description || "No additional notes"}`);
+      // Priorité du colis
+      const isPriority = packages[currentPackage - 1]?.priorityShipping || false;
+      formData.append("priority", isPriority.toString());
+      
+      // Si un box de stockage est sélectionné
+      if (startingType === 'box' && startingBox) {
+        // Extraire l'ID du box depuis la chaîne "Storage box X"
+        const boxId = startingBox.replace("Storage box ", "");
+        formData.append("storage_box_id", boxId);
+      }
+
+      // Description complète incluant détails du colis
+      const fullDescription = `Package Name: ${packageName}
+Package Size: ${packageSize}
+Package Weight: ${packageWeight} kg
+Additional Notes: ${description || "No additional notes"}`;
+      
+      formData.append("description", fullDescription);
       
       // Images
       if (selectedImage) {
@@ -249,7 +262,7 @@ export default function CreateAnnouncementPage() {
       console.log("Données envoyées:", formDataDebug);
       
       // Envoi des données
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -317,12 +330,24 @@ export default function CreateAnnouncementPage() {
     setStep(2)
   }
 
-  const proceedToPackageDetails = () => {
+  const proceedToDeliveryDateStep = () => {
     setStep(3)
+  }
+
+  const proceedToPackageDetails = () => {
+    setStep(4)
   }
 
   const goBackToPackageCount = () => {
     setStep(1)
+  }
+
+  const goBackToAddressStep = () => {
+    setStep(2)
+  }
+
+  const goBackToDeliveryDateStep = () => {
+    setStep(3)
   }
 
   const selectStartingAddress = (suggestion: AddressSuggestion) => {
@@ -551,7 +576,7 @@ export default function CreateAnnouncementPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={proceedToPackageDetails}
+                    onClick={proceedToDeliveryDateStep}
                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     disabled={
                      (startingType === 'address'
@@ -559,15 +584,54 @@ export default function CreateAnnouncementPage() {
                          : !startingBox)
                    }
                   >
-                    {t("announcements.continueToDetails")}
+                    {t("announcements.continueToDeliveryDate")}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Étape 3: Détails des colis */}
+          {/* Étape 3: Date de livraison */}
           {step === 3 && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-medium text-gray-800 mb-6">{t("announcements.deliveryDate")}</h2>
+
+              <div className="mb-6">
+                <label htmlFor="deliveryDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  {t("announcements.selectDeliveryDate")}
+                </label>
+                <input
+                  type="date"
+                  id="deliveryDate"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-between pt-4">
+                <button
+                  type="button"
+                  onClick={goBackToAddressStep}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  {t("common.back")}
+                </button>
+                <button
+                  type="button"
+                  onClick={proceedToPackageDetails}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  disabled={!deliveryDate}
+                >
+                  {t("announcements.continueToDetails")}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 4: Contenu des colis */}
+          {step === 4 && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-medium text-gray-800">
@@ -637,7 +701,6 @@ export default function CreateAnnouncementPage() {
                         onChange={(e) => setTitle(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="Titre de votre annonce"
-                        required
                       />
                     </div>
 
@@ -717,6 +780,20 @@ export default function CreateAnnouncementPage() {
                       </select>
                     </div>
 
+                    <div className="mt-8">
+                      <label htmlFor={`description-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                        {t("announcements.additionalNotes")}
+                      </label>
+                      <textarea
+                        id={`description-${index}`}
+                        name={`package_${index + 1}_description`}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        rows={3}
+                      />
+                    </div>
+
                     <div className="flex items-center mt-8">
                       <input
                         type="checkbox"
@@ -740,7 +817,7 @@ export default function CreateAnnouncementPage() {
                 <div className="flex justify-between space-x-4 mt-8">
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={goBackToDeliveryDateStep}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                   >
                     {t("common.back")}

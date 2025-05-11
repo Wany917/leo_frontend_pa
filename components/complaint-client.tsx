@@ -81,7 +81,26 @@ export default function ComplaintClient() {
     const fetchComplaints = async () => {
       try {
         const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints`, {
+        
+        if (!token) {
+          console.error("Aucun token d'authentification trouvé");
+          return;
+        }
+        
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!userResponse.ok) {
+          throw new Error("Erreur lors de la récupération des informations utilisateur");
+        }
+        
+        const userData = await userResponse.json();
+        const userId = userData.id;
+        
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints/user/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -89,32 +108,37 @@ export default function ComplaintClient() {
         
         if (response.ok) {
           const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
-            // Convertir au format attendu par le composant
-            const formattedComplaints: ComplaintItem[] = data.map((item: any) => ({
+          if (data && data.complaints && Array.isArray(data.complaints)) {
+            const formattedComplaints = data.complaints.map((item) => ({
               id: item.id,
-              announce: item.announce_id || "Unknown",
-              shippingPrice: `£${item.shipping_price || 0}`,
-              justificativePieces: item.justificative_pieces?.length || 0,
+              announce: item.relatedOrderId || "N/A",
+              shippingPrice: `£${item.shippingPrice || 0}`,
+              justificativePieces: item.justificativePieces?.length || 0,
               description: item.description || "",
-              status: item.status || "pending",
-              dateSubmitted: formatDate(item.created_at)
+              status: mapStatus(item.status),
+              dateSubmitted: formatDate(item.createdAt)
             }));
             
-            // Ne mettre à jour que si on a des données
-            if (formattedComplaints.length > 0) {
-              setComplaints(formattedComplaints);
-            }
+            setComplaints(formattedComplaints);
           }
         }
       } catch (error) {
-        console.error("Error fetching complaints:", error);
-        // En cas d'erreur, on garde les plaintes par défaut
+        console.error("Erreur lors de la récupération des plaintes:", error);
       }
     };
     
     fetchComplaints();
   }, []);
+
+  const mapStatus = (backendStatus) => {
+    switch (backendStatus) {
+      case "open": return "pending";
+      case "in_progress": return "in_progress";
+      case "resolved": return "done";
+      case "closed": return "rejected";
+      default: return "pending";
+    }
+  };
 
   useEffect(() => {
 		const token =
