@@ -16,7 +16,6 @@ interface AddressSuggestion {
 
 export default function CreateAnnouncementPage() {
   const { t } = useLanguage()
-  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Date de livraison, Étape 4: Contenu des colis
   const [packageCount, setPackageCount] = useState(1)
@@ -35,6 +34,9 @@ export default function CreateAnnouncementPage() {
   const [startingAddress, setStartingAddress] = useState("")
   const [startingBox, setStartingBox] = useState("")
 
+  // État pour la date de livraison
+  const [deliveryDate, setDeliveryDate] = useState("")
+
   // États pour les caractéristiques du colis
   const [title, setTitle] = useState("")
   const [price, setPrice] = useState("")
@@ -42,8 +44,6 @@ export default function CreateAnnouncementPage() {
   const [packageName, setPackageName] = useState("")
   const [packageSize, setPackageSize] = useState("Medium")
   const [packageWeight, setPackageWeight] = useState("1")
-  const [deliveryDate, setDeliveryDate] = useState("")
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
 
   // Refs pour les dropdowns
   const startingSuggestionsRef = useRef<HTMLDivElement>(null)
@@ -56,6 +56,8 @@ export default function CreateAnnouncementPage() {
       imagePreview: null,
     },
   ])
+
+  const router = useRouter()
 
   // Effet pour gérer les clics en dehors des suggestions
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function CreateAnnouncementPage() {
       }
       
       const userData = await userResponse.json();
-      const utilisateur_id = userData.id;
+      const utilisateurId = userData.id;
 
       console.log("Préparation des données du formulaire");
       
@@ -216,7 +218,7 @@ export default function CreateAnnouncementPage() {
       const formData = new FormData();
       
       // Données utilisateur et générales
-      formData.append("utilisateur_id", utilisateur_id.toString());
+      formData.append("utilisateur_id", utilisateurId.toString());
       formData.append("title", finalTitle);
       formData.append("price", price ? price.toString() : "0");
       
@@ -226,40 +228,23 @@ export default function CreateAnnouncementPage() {
       
       // Dates
       if (deliveryDate) {
-        formData.append("scheduled_date", deliveryDate);
+        const deliveryDateObject = new Date(deliveryDate);
+        const formattedDate = deliveryDateObject.toISOString().replace('T', ' ').split('.')[0];
+        formData.append("scheduled_date", formattedDate);
       }
 
-      // Priorité du colis
-      const isPriority = packages[currentPackage - 1]?.priorityShipping || false;
-      formData.append("priority", isPriority.toString());
+      // Description et spécifications du colis
+      formData.append("description", `Package Name: ${packageName}\nPackage Size: ${packageSize}\nPackage Weight: ${packageWeight}\nAdditional Notes: ${description || "No additional notes"}`);
       
-      // Si un box de stockage est sélectionné
-      if (startingType === 'box' && startingBox) {
-        // Extraire l'ID du box depuis la chaîne "Storage box X"
-        const boxId = startingBox.replace("Storage box ", "");
-        formData.append("storage_box_id", boxId);
+      // Priorité d'expédition
+      if (packages[currentPackage - 1].priorityShipping) {
+        formData.append("priority", "true");
       }
-
-      // Description complète incluant détails du colis
-      const fullDescription = `Package Name: ${packageName}
-Package Size: ${packageSize}
-Package Weight: ${packageWeight} kg
-Additional Notes: ${description || "No additional notes"}`;
-      
-      formData.append("description", fullDescription);
       
       // Images
-      if (selectedImage) {
-        console.log("Ajout de l'image au formulaire", selectedImage.name);
-        formData.append("image", selectedImage);
+      if (packages[currentPackage - 1].image) {
+        formData.append("image", packages[currentPackage - 1].image);
       }
-
-      // Afficher toutes les données qui vont être envoyées pour le débogage
-      const formDataDebug: Record<string, any> = {};
-      formData.forEach((value, key) => {
-        formDataDebug[key] = value instanceof File ? `[File: ${value.name}]` : value;
-      });
-      console.log("Données envoyées:", formDataDebug);
       
       // Envoi des données
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/create`, {
@@ -269,8 +254,6 @@ Additional Notes: ${description || "No additional notes"}`;
         },
         body: formData
       });
-
-      console.log("Réponse du serveur:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -289,21 +272,16 @@ Additional Notes: ${description || "No additional notes"}`;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, packageIndex: number) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
+    const file = e.target.files?.[0]
+    if (file) {
+      const newPackages = [...packages]
+      newPackages[packageIndex].image = file
+
       const reader = new FileReader()
-
-      reader.onload = (event) => {
-        const newPackages = [...packages]
-        newPackages[packageIndex] = {
-          ...newPackages[packageIndex],
-          image: file,
-          imagePreview: event.target?.result,
-        }
+      reader.onloadend = () => {
+        newPackages[packageIndex].imagePreview = reader.result as string
         setPackages(newPackages)
-        setSelectedImage(file)
       }
-
       reader.readAsDataURL(file)
     }
   }
@@ -701,6 +679,7 @@ Additional Notes: ${description || "No additional notes"}`;
                         onChange={(e) => setTitle(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="Titre de votre annonce"
+                        required
                       />
                     </div>
 
@@ -778,20 +757,6 @@ Additional Notes: ${description || "No additional notes"}`;
                         <option value="Medium">Medium</option>
                         <option value="Large">Large</option>
                       </select>
-                    </div>
-
-                    <div className="mt-8">
-                      <label htmlFor={`description-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                        {t("announcements.additionalNotes")}
-                      </label>
-                      <textarea
-                        id={`description-${index}`}
-                        name={`package_${index + 1}_description`}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        rows={3}
-                      />
                     </div>
 
                     <div className="flex items-center mt-8">

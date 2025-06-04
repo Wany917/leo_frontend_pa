@@ -1,8 +1,10 @@
 "use client"
 
 import { ComplaintsTable } from "@/components/back-office/complaints-table"
+import { useLanguage } from "@/components/language-context"
 
 export function ComplaintsContent() {
+  const { t } = useLanguage()
   // Données fictives pour les réclamations
   const complaintsData = [
     {
@@ -18,7 +20,7 @@ export function ComplaintsContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Complaints</h1>
+      <h1 className="text-2xl font-bold">{t("admin.complaints")}</h1>
       <ComplaintsTable data={complaintsData} />
     </div>
   )

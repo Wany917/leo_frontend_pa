@@ -5,14 +5,11 @@ import { useLanguage } from "./language-context"
 
 export default function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, availableLocales } = useLanguage()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen)
-  }
-
-  const selectLanguage = (lang: "FR" | "EN" | "ES") => {
+  const toggleDropdown = () => setIsOpen(open => !open)
+  const selectLanguage = (lang: string) => {
     setLanguage(lang)
     setIsOpen(false)
   }
@@ -24,11 +21,8 @@ export default function LanguageSelector() {
         setIsOpen(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   return (
@@ -39,7 +33,7 @@ export default function LanguageSelector() {
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <span className="font-semibold">{language}</span>
+        <p className="font-semibold">{language.toUpperCase()}</p>
         <svg
           width="16"
           height="16"
@@ -57,29 +51,24 @@ export default function LanguageSelector() {
           />
         </svg>
       </button>
+
       {isOpen && (
-        <div className="absolute right-0 sm:right-auto mt-2 w-24 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-          <button
-            onClick={() => selectLanguage("FR")}
-            className={`block w-full text-left px-4 py-2 text-sm ${language === "FR" ? "bg-green-50 text-white" : "text-gray-700 hover:bg-gray-100"}`}
-          >
-            FR
-          </button>
-          <button
-            onClick={() => selectLanguage("EN")}
-            className={`block w-full text-left px-4 py-2 text-sm ${language === "EN" ? "bg-green-50 text-white" : "text-gray-700 hover:bg-gray-100"}`}
-          >
-            EN
-          </button>
-          <button
-            onClick={() => selectLanguage("ES")}
-            className={`block w-full text-left px-4 py-2 text-sm ${language === "ES" ? "bg-green-50 text-white" : "text-gray-700 hover:bg-gray-100"}`}
-          >
-            ES
-          </button>
+        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+          {availableLocales.map((lang) => (
+            <button
+              key={lang}
+              onClick={() => selectLanguage(lang)}
+              className={`block w-full text-left px-4 py-2 text-sm ${
+                language === lang
+                  ? "bg-green-50 text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              {lang.toUpperCase()}
+            </button>
+          ))}
         </div>
       )}
     </div>
   )
 }
-

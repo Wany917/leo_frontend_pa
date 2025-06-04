@@ -71,7 +71,7 @@ export default function ChangePasswordPage() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/app_deliveryman/dashboard">
+            <Link href="/app_deliveryman">
               <Image
                 src="/logo.png"
                 alt="EcoDeli Logo"

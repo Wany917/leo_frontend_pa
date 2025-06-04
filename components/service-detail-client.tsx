@@ -79,33 +79,56 @@ export default function ServiceDetailClient({ id }: { id: string }) {
 	}, []);
 
   useEffect(() => {
-    const fetchServiceDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/services/${serviceId}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          const serviceData = {
-            id: data.id,
-            title: data.title,
-            image: data.image || "/placeholder.svg",
-            description: data.description,
-            price: `£${data.price}`,
-            rating: data.rating || 5,
-            provider: data.provider_name
-          };
-          setService(serviceData);
+    const services: Service[] = [
+      {
+        id: 1,
+        title: t("services.babySitter"),
+        image: "/baby-sitter.jpg",
+        description: t("services.babySitterDesc"),
+        price: "£17/hour",
+        rating: 5,
+        provider: "Emma",
+      },
+      {
+        id: 2,
+        title: t("services.dogSitter"),
+        image: "/dog-sitter.jpg",
+        description: t("services.dogSitterDesc"),
+        price: "£20/hour",
+        rating: 5,
+        provider: "Charlotte",
+      },
+      {
+        id: 3,
+        title: t("services.airportRide"),
+        image: "/airport-ride.jpg",
+        description: t("services.airportRideDesc"),
+        price: "£30 + £2/km",
+        rating: 5,
+        provider: "Thomas",
+      },
+    ]
+
+    const foundService = services.find((s) => s.id.toString() === serviceId)
+
+    setTimeout(() => {
+      setService(foundService || null)
+      setLoading(false)
+
+      const today = new Date()
+      const dates: Date[] = []
+
+      for (let i = 1; i <= 30; i++) {
+        if (i % 2 === 0 || i % 3 === 0) {
+          const date = new Date(today)
+          date.setDate(today.getDate() + i)
+          dates.push(date)
         }
-      } catch (error) {
-        console.error("Error fetching service details:", error);
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchServiceDetails();
-  }, [serviceId]);
+
+      setAvailableDates(dates)
+    }, 500)
+  }, [serviceId, t])
 
   useEffect(() => {
     if (!date) {
@@ -183,7 +206,7 @@ export default function ServiceDetailClient({ id }: { id: string }) {
           <div className="flex items-center">
             <Link href="/app_client">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+                src="/logo.png"
                 alt="EcoDeli Logo"
                 width={120}
                 height={40}

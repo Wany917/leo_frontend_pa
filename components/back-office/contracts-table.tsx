@@ -3,6 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { ResponsiveTableWrapper } from "@/components/back-office/responsive-table-wrapper"
+import { useLanguage } from "@/components/language-context"
 
 interface ContractData {
   id: number
@@ -16,16 +17,17 @@ interface ContractsTableProps {
 }
 
 export function ContractsTable({ data }: ContractsTableProps) {
+  const { t } = useLanguage()
   return (
     <ResponsiveTableWrapper>
       <Table>
         <TableHeader>
           <TableRow className="bg-white">
-            <TableHead className="font-medium">Client</TableHead>
-            <TableHead className="font-medium">Contract</TableHead>
-            <TableHead className="font-medium">Price</TableHead>
-            <TableHead className="font-medium">Invoice</TableHead>
-            <TableHead className="font-medium">Status</TableHead>
+            <TableHead className="font-medium">{t("admin.client")}</TableHead>
+            <TableHead className="font-medium">{t("admin.userContract")}</TableHead>
+            <TableHead className="font-medium">{t("admin.price")}</TableHead>
+            <TableHead className="font-medium">{t("admin.invoice")}</TableHead>
+            <TableHead className="font-medium">{t("admin.paymentStatus")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

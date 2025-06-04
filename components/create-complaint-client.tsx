@@ -6,13 +6,13 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { User, ChevronDown, Edit, LogOut } from "lucide-react"
+import { User, ChevronDown, Edit, LogOut, Upload, X } from "lucide-react"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
 
 // Interface pour les annonces
 interface Announcement {
-  id: string
+  id: number
   title: string
 }
 
@@ -23,100 +23,13 @@ export default function CreateComplaintClient() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false)
+
   const [formData, setFormData] = useState({
     announce: "",
     shippingPrice: "",
     description: "",
   })
-
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-        if (!token) return
-        
-        // Pour le débogage - vérifier que nous avons bien un token
-        console.log("Token récupéré:", token ? "Oui" : "Non")
-        
-        // Récupérer l'ID de l'utilisateur connecté
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (!userResponse.ok) {
-          console.error("Erreur lors de la récupération des informations utilisateur")
-          setAnnouncements([
-            { id: "1", title: "Annonce #1 - Test" },
-            { id: "2", title: "Annonce #2 - Test" },
-          ])
-          return
-        }
-        
-        const userData = await userResponse.json()
-        console.log("Données utilisateur:", userData)
-        const userId = userData.id
-        
-        if (!userId) {
-          console.error("ID utilisateur non trouvé")
-          setAnnouncements([
-            { id: "1", title: "Annonce #1 - Test" },
-            { id: "2", title: "Annonce #2 - Test" },
-          ])
-          return
-        }
-        
-        // Récupérer les annonces de l'utilisateur avec la bonne URL
-        const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        console.log(`URL appelée: ${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${userId}`)
-        console.log("Statut de la réponse API annonces:", annonceResponse.status)
-        
-        if (annonceResponse.ok) {
-          const data = await annonceResponse.json()
-          console.log("Données annonces reçues:", data)
-          
-          if (data && Array.isArray(data)) {
-            setAnnouncements(data.map((item: any) => ({
-              id: item.id,
-              title: `Annonce #${item.id} - ${item.title || 'Sans titre'}`
-            })))
-          } else if (data && data.annonces && Array.isArray(data.annonces)) {
-            setAnnouncements(data.annonces.map((item: any) => ({
-              id: item.id,
-              title: `Annonce #${item.id} - ${item.title || 'Sans titre'}`
-            })))
-          } else {
-            console.warn("Format de données inattendu pour les annonces:", data)
-            setAnnouncements([
-              { id: "1", title: "Annonce #1 - Test" },
-              { id: "2", title: "Annonce #2 - Test" },
-            ])
-          }
-        } else {
-          console.error("Erreur API annonces:", await annonceResponse.text())
-          setAnnouncements([
-            { id: "1", title: "Annonce #1 - Test" },
-            { id: "2", title: "Annonce #2 - Test" },
-          ])
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des annonces:", error)
-        setAnnouncements([
-          { id: "1", title: "Annonce #1 - Test" },
-          { id: "2", title: "Annonce #2 - Test" },
-        ])
-      }
-    }
-    
-    fetchAnnouncements()
-  }, [])
 
   useEffect(() => {
 		const token =
@@ -142,6 +55,56 @@ export default function CreateComplaintClient() {
 			.catch((err) => console.error('Auth/me failed:', err));
 	}, []);
 
+  // Récupérer les annonces de l'utilisateur
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        setIsLoadingAnnouncements(true);
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        
+        // D'abord, récupérer l'ID de l'utilisateur connecté
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!userResponse.ok) {
+          throw new Error("Impossible de récupérer les informations utilisateur");
+        }
+        
+        const userData = await userResponse.json();
+        const utilisateurId = userData.id;
+        
+        // Ensuite, récupérer les annonces de l'utilisateur
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${utilisateurId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const annoncesData = Array.isArray(data) ? data : data.data || data.annonces || [];
+          
+          if (annoncesData.length > 0) {
+            const formattedAnnouncements = annoncesData.map((item: any) => ({
+              id: item.id,
+              title: item.title || `Annonce #${item.id}`
+            }));
+            setAnnouncements(formattedAnnouncements);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      } finally {
+        setIsLoadingAnnouncements(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -154,77 +117,35 @@ export default function CreateComplaintClient() {
     setIsSubmitting(true)
 
     try {
-      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-      
-      if (!token) {
-        console.error("Aucun token d'authentification trouvé")
-        setIsSubmitting(false)
-        return
-      }
-      
-      // Récupérer l'ID de l'utilisateur connecté
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!userResponse.ok) {
-        console.error("Erreur lors de la récupération des informations utilisateur")
-        setIsSubmitting(false)
-        return
-      }
-      
-      const userData = await userResponse.json()
-      const userId = userData.id
-      
-      if (!userId) {
-        console.error("ID utilisateur non trouvé")
-        setIsSubmitting(false)
-        return
-      }
-      
-      // Créer un sujet à partir de la description (limité aux 50 premiers caractères)
-      const shortDescription = formData.description.substring(0, 50)
-      const subject = shortDescription + (formData.description.length > 50 ? '...' : '')
-      
-      // Préparer les données de la réclamation
-      const complaintData = {
-        related_order_id: formData.announce,
-        shipping_price: formData.shippingPrice,
+      // Créer une nouvelle réclamation
+      const newComplaint = {
+        id: `c${Date.now()}`,
+        announce: formData.announce,
+        shippingPrice: formData.shippingPrice,
+        justificativePieces: 0,
         description: formData.description,
-        utilisateur_id: userId,
-        status: "open",
-        priority: "medium",
-        subject: subject
+        status: "pending" as const,
+        dateSubmitted: new Date().toISOString().split('T')[0]
+      };
+
+      // Récupérer les réclamations existantes du localStorage
+      const existingComplaints = localStorage.getItem('userComplaints');
+      let allComplaints = [];
+      
+      if (existingComplaints) {
+        allComplaints = JSON.parse(existingComplaints);
       }
       
-      // Envoi de la réclamation
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(complaintData)
-      })
+      // Ajouter la nouvelle réclamation
+      allComplaints = [newComplaint, ...allComplaints];
       
-      console.log("Données envoyées:", complaintData)
-      console.log("Statut de la réponse:", response.status)
-      
-      if (response.ok) {
-        router.push("/app_client/complaint")
-      } else {
-        const errorText = await response.text()
-        try {
-          const errorData = JSON.parse(errorText)
-          console.error("Erreur lors de la soumission:", errorData)
-        } catch {
-          console.error("Erreur lors de la soumission (texte brut):", errorText)
-        }
-      }
+      // Sauvegarder dans le localStorage
+      localStorage.setItem('userComplaints', JSON.stringify(allComplaints));
+
+      // Redirection vers la page des réclamations
+      router.push("/app_client/complaint")
     } catch (error) {
-      console.error("Erreur lors de la soumission de la plainte:", error)
+      console.error("Error submitting complaint:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -238,7 +159,7 @@ export default function CreateComplaintClient() {
           <div className="flex items-center">
             <Link href="/app_client">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+                src="/logo.png"
                 alt="EcoDeli Logo"
                 width={120}
                 height={40}
@@ -331,7 +252,7 @@ export default function CreateComplaintClient() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="announce" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("complaints.announceId")}
+                  {t("complaints.announce")}
                 </label>
                 <select
                   id="announce"
@@ -341,10 +262,10 @@ export default function CreateComplaintClient() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
                 >
-                  <option value="">{t("complaints.selectAnnouncement")}</option>
+                  <option value="">{isLoadingAnnouncements ? t("common.loading") : t("common.selectOption")}</option>
                   {announcements.map((announcement) => (
                     <option key={announcement.id} value={announcement.id}>
-                      {announcement.title}
+                      {announcement.title} (#{announcement.id})
                     </option>
                   ))}
                 </select>
@@ -402,5 +323,36 @@ export default function CreateComplaintClient() {
       </main>
     </div>
   )
+}
+
+// Helper function to format file size
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return "0 Bytes"
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
+
+// File icon component
+function FileIcon({ extension }: { extension: string }) {
+  // Determine icon based on file extension
+  switch (extension.toLowerCase()) {
+    case "pdf":
+      return <div className="text-red-500 text-xs font-bold">PDF</div>
+    case "doc":
+    case "docx":
+      return <div className="text-blue-500 text-xs font-bold">DOC</div>
+    case "xls":
+    case "xlsx":
+      return <div className="text-green-500 text-xs font-bold">XLS</div>
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+      return <div className="text-purple-500 text-xs font-bold">IMG</div>
+    default:
+      return <div className="text-gray-500 text-xs font-bold">FILE</div>
+  }
 }
 

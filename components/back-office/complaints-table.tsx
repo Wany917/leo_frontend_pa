@@ -3,6 +3,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ResponsiveTableWrapper } from "@/components/back-office/responsive-table-wrapper"
 import Link from "next/link"
+import { useLanguage } from "@/components/language-context"
+import { useState } from "react"
 
 interface ComplaintData {
   id: number
@@ -19,6 +21,7 @@ interface ComplaintsTableProps {
 }
 
 export function ComplaintsTable({ data }: ComplaintsTableProps) {
+  const { t } = useLanguage()
   // Fonction pour rendre le badge de statut avec la bonne couleur
   const renderStatusBadge = (status: string) => {
     let bgColor = ""
@@ -57,32 +60,32 @@ export function ComplaintsTable({ data }: ComplaintsTableProps) {
           {data.map((complaint) => (
             <TableRow key={complaint.id} className="cursor-pointer hover:bg-gray-50" onClick={() => {}}>
               <TableCell>
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {complaint.client}
                 </Link>
               </TableCell>
               <TableCell>
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {complaint.announceId}
                 </Link>
               </TableCell>
               <TableCell>
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {complaint.shippingPrice}
                 </Link>
               </TableCell>
               <TableCell>
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {complaint.justificativePieces}
                 </Link>
               </TableCell>
               <TableCell className="max-w-xs truncate">
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {complaint.description}
                 </Link>
               </TableCell>
               <TableCell>
-                <Link href={`/complaints/${complaint.id}`} className="block w-full h-full">
+                <Link href={`/admin/complaints/${complaint.id}`} className="block w-full h-full">
                   {renderStatusBadge(complaint.status)}
                 </Link>
               </TableCell>

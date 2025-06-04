@@ -52,7 +52,7 @@ export default function DeliverymanEditJustificative() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white p-4 flex justify-between items-center shadow-sm">
-        <Link href="/deliveryman/dashboard" className="flex items-center">
+        <Link href="/app_deliveryman" className="flex items-center">
           <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
         </Link>
 

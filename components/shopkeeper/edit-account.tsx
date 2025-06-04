@@ -230,7 +230,7 @@ export default function ShopkeeperEditAccount() {
 
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-medium">{t("auth.editJustificative")}</h2>
-                <Link href="/app_shopkeeper/edit_justificative" className="text-sm text-green-500 hover:underline">
+                <Link href="/app_shopkeeper/edit-justificative" className="text-sm text-green-500 hover:underline">
                   {t("auth.editJustificative")}
                 </Link>
               </div>

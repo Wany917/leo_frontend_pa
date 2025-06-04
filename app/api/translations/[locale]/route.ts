@@ -1,30 +1,36 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
-type Locale = "en" | "fr" | "es"
-
-async function getTranslationsFromDatabase(locale: string) {
-  const translations: Record<Locale, any> = {
-    en: require("@/locales/en.json"),
-    fr: require("@/locales/fr.json"),
-    es: require("@/locales/es.json"),
-  }
-  const safeLocale = (["en", "fr", "es"].includes(locale) ? locale : "en") as Locale
-  return translations[safeLocale]
-}
+const translationsDir = path.join(process.cwd(), 'locales');
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ locale: string }> }
+	req: NextRequest,
+	{ params }: { params: { locale: string } }
 ) {
-  try {
-    const { locale } = await params
-    const translations = await getTranslationsFromDatabase(locale)
-    return NextResponse.json(translations)
-  } catch (error) {
-    console.error("Error fetching translations:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch translations" },
-      { status: 500 }
-    )
-  }
+	const { locale } = await params;
+	const file = path.join(translationsDir, `${locale.toLowerCase()}.json`);
+	try {
+		const content = await fs.readFile(file, 'utf-8');
+		return NextResponse.json(JSON.parse(content));
+	} catch {
+		return NextResponse.json({ error: 'Not found' }, { status: 404 });
+	}
+}
+
+export async function PUT(
+	req: NextRequest,
+	{ params }: { params: { locale: string } }
+) {
+	const { locale } = await params;
+	const file = path.join(translationsDir, `${locale.toLowerCase()}.json`);
+	try {
+		await fs.writeFile(file, JSON.stringify({}, null, 2), 'utf-8');
+		return NextResponse.json({ ok: true });
+	} catch {
+		return NextResponse.json(
+			{ error: 'Could not create' },
+			{ status: 500 }
+		);
+	}
 }

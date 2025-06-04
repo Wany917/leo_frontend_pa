@@ -9,7 +9,8 @@ interface OnboardingStep {
   description: string
   target: string
   position: "top" | "right" | "bottom" | "left" | "center"
-  offsetX?: number // ➕ Optionnel pour ajuster manuellement l'alignement horizontal
+  offsetX?: number
+  beforeStep?: () => void
 }
 
 interface OnboardingOverlayProps {
@@ -22,8 +23,18 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
   const { t } = useLanguage()
   const [currentStep, setCurrentStep] = useState(0)
   const [targetElement, setTargetElement] = useState<DOMRect | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
-  const steps: OnboardingStep[] = [
+  // Détection du mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Étapes desktop
+  const desktopSteps: OnboardingStep[] = [
     {
       title: t("onboarding.welcome"),
       description: t("onboarding.welcomeDescription"),
@@ -59,32 +70,93 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
       description: t("onboarding.profileDescription"),
       target: "button:has(.lucide-user)",
       position: "bottom",
-      offsetX: -80, // ➖ Décalage horizontal vers la gauche pour cette étape
+      offsetX: -80,
     },
   ]
 
+  // Étapes mobile
+  const mobileSteps: OnboardingStep[] = [
+    {
+      title: t("onboarding.welcome"),
+      description: t("onboarding.welcomeDescription"),
+      target: "body",
+      position: "center",
+    },
+    {
+      title: t("onboarding.openMenu"),
+      description: t("onboarding.openMenuDescription"),
+      target: "button[aria-label='Open navigation menu']",
+      position: "bottom",
+      beforeStep: () => {
+        const btn = document.querySelector("button[aria-label='Open navigation menu']") as HTMLElement
+        btn?.click()
+      },
+    },
+    {
+      title: t("onboarding.announcements"),
+      description: t("onboarding.announcementsDescription"),
+      target: 'nav a[href*="announcements"]',
+      position: "right",
+    },
+    {
+      title: t("onboarding.payments"),
+      description: t("onboarding.paymentsDescription"),
+      target: 'nav a[href*="payments"]',
+      position: "right",
+    },
+    {
+      title: t("onboarding.messages"),
+      description: t("onboarding.messagesDescription"),
+      target: 'nav a[href*="messages"]',
+      position: "right",
+    },
+    {
+      title: t("onboarding.complaints"),
+      description: t("onboarding.complaintsDescription"),
+      target: 'nav a[href*="complaint"]',
+      position: "right",
+    },
+    {
+      title: t("onboarding.profile"),
+      description: t("onboarding.profileDescription"),
+      target: 'button:has(.lucide-user)',
+      position: "right",
+      offsetX: -80,
+    },
+  ]
+
+  const steps = isMobile ? mobileSteps : desktopSteps
+
+  // Mise à jour du target + beforeStep
   useEffect(() => {
     const updateTargetPosition = () => {
-      const selector = steps[currentStep].target
-      const element = document.querySelector(selector)
-
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" })
-        setTargetElement(element.getBoundingClientRect())
+      const step = steps[currentStep]
+      if (step.beforeStep) {
+        step.beforeStep()
+        setTimeout(doLocate, 300)
       } else {
-        setTargetElement(null)
+        doLocate()
+      }
+
+      function doLocate() {
+        const element = document.querySelector(step.target)
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+          setTargetElement(element.getBoundingClientRect())
+        } else {
+          setTargetElement(null)
+        }
       }
     }
 
     updateTargetPosition()
     window.addEventListener("resize", updateTargetPosition)
     return () => window.removeEventListener("resize", updateTargetPosition)
-  }, [currentStep])
+  }, [currentStep, isMobile])
 
   const getTooltipPosition = () => {
     const step = steps[currentStep]
     const offsetX = step.offsetX ?? 0
-
     if (!targetElement || step.position === "center") {
       return {
         left: "50%",
@@ -92,10 +164,8 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
         transform: "translate(-50%, -50%)",
       }
     }
-
     const { left, right, top, bottom, width, height } = targetElement
     const padding = 20
-
     switch (step.position) {
       case "top":
         return {
@@ -140,9 +210,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
         transform: "translate(-50%, -50%)",
       }
     }
-
     const padding = 10
-
     return {
       left: `${targetElement.left - padding}px`,
       top: `${targetElement.top - padding}px`,
@@ -156,7 +224,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
     } else {
-      handleComplete()
+      complete()
     }
   }
 
@@ -166,7 +234,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
     }
   }
 
-  const handleComplete = () => {
+  const complete = () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(ONBOARDING_STORAGE_KEY, "true")
     }
@@ -197,15 +265,19 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
         }}
       >
         <button
-          onClick={handleComplete}
+          onClick={complete}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
           aria-label={t("common.close")}
         >
           <X size={20} />
         </button>
 
-        <h3 className="text-xl font-semibold text-green-500 mb-2">{steps[currentStep].title}</h3>
-        <p className="text-gray-600 mb-6">{steps[currentStep].description}</p>
+        <h3 className="text-xl font-semibold text-green-500 mb-2">
+          {steps[currentStep].title}
+        </h3>
+        <p className="text-gray-600 mb-6">
+          {steps[currentStep].description}
+        </p>
 
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
@@ -214,8 +286,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                 key={index}
                 className={`w-2 h-2 rounded-full transition-colors ${
                   index === currentStep ? "bg-green-500" : "bg-gray-300"
-                }`}
-              />
+                }`} />
             ))}
           </div>
 
@@ -236,7 +307,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
               </button>
             ) : (
               <button
-                onClick={handleComplete}
+                onClick={complete}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
               >
                 {t("common.getStarted")}

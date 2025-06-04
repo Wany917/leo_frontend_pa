@@ -6,7 +6,6 @@ import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Star, CreditCard } from "lucide-react"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
-import { loadStripe } from '@stripe/stripe-js'
 
 // Types for our data
 interface DeliveryItem {
@@ -30,25 +29,6 @@ interface ServiceItem {
   date: string
   rating: number
   status: "paid" | "unpaid"
-}
-
-// Initialisation du client Stripe (à l'extérieur du composant)
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || '')
-
-// Typage explicite pour éviter les erreurs
-interface ApiPayment {
-  id: number
-  type: 'delivery' | 'service'
-  image: string
-  name: string
-  destination?: string
-  provider?: string
-  price: string
-  amount?: number
-  deliveryDate?: string
-  date?: string
-  status: 'paid' | 'pending' | 'failed' | 'refunded'
-  rating: number
 }
 
 export default function PaymentsPage() {
@@ -132,124 +112,47 @@ export default function PaymentsPage() {
     return item.status === activeTab
   })
 
-  // Récupérer les données de livraison et de service
   useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-        if (!token) return
-        
-        // Récupérer les informations de l'utilisateur
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (!userResponse.ok) throw new Error('Erreur utilisateur')
-        
-        const userData = await userResponse.json()
-        setUserName(userData.firstName)
-        
-        // Récupérer les paiements de l'utilisateur
-        const paymentsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/payments/user/${userData.id}`,
-          {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }
-        )
-        
-        if (!paymentsResponse.ok) throw new Error('Erreur paiements')
-        
-        const paymentsData = await paymentsResponse.json() as ApiPayment[]
-        
-        // Plus besoin de mapper les données puisque l'API renvoie déjà le bon format
-        const deliveryPayments = paymentsData
-          .filter((p: ApiPayment) => p.type === 'delivery')
-          .map((p: ApiPayment) => ({
-            id: p.id.toString(),
-            image: p.image,
-            name: p.name,
-            destination: p.destination || "Adresse non spécifiée",
-            price: p.price,
-            amount: p.amount || 1,
-            deliveryDate: p.deliveryDate || new Date().toLocaleDateString('fr-FR'),
-            status: p.status === 'paid' ? 'paid' : 'unpaid',
-            rating: p.rating || 0,
-          }))
-        
-        const servicePayments = paymentsData
-          .filter((p: ApiPayment) => p.type === 'service')
-          .map((p: ApiPayment) => ({
-            id: p.id.toString(),
-            image: p.image,
-            name: p.name,
-            provider: p.provider || "Prestataire",
-            price: p.price,
-            date: p.date || new Date().toLocaleDateString('fr-FR'),
-            rating: p.rating || 0,
-            status: p.status === 'paid' ? 'paid' : 'unpaid',
-          }))
-        
-        setDeliveries(deliveryPayments)
-        setServices(servicePayments)
-        
-      } catch (error) {
-        console.error("Erreur lors du chargement des paiements:", error)
-        // Garder les données mock en cas d'erreur
-      }
-    }
-    
-    fetchPayments()
-  }, [])
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   // Handle payment
   const handlePayment = async (type: "delivery" | "service", id: string) => {
+    // In a real app, this would redirect to Stripe checkout
+    // For demo purposes, we'll just update the status
     try {
-      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-      if (!token) return
-      
-      // Trouver l'item à payer
-      const item = type === "delivery" 
-        ? deliveries.find(d => d.id === id) 
-        : services.find(s => s.id === id)
-      
-      if (!item) return
-      
-      // Extraire le montant numérique
-      const amount = parseFloat(item.price.replace(/[^0-9.]/g, ''))
-      
-      // Créer une session de paiement
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount,
-          itemType: type,
-          itemId: parseInt(id),
-          description: item.name,
-          currency: item.price.includes('€') ? 'EUR' : 'GBP'
-        })
-      })
-      
-      if (!response.ok) throw new Error('Erreur session de paiement')
-      
-      const { sessionId, url } = await response.json()
-      
-      // Rediriger vers Stripe Checkout
-      if (url) {
-        window.location.href = url
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      if (type === "delivery") {
+        setDeliveries((prev) => prev.map((item) => (item.id === id ? { ...item, status: "paid" } : item)))
       } else {
-        const stripe = await stripePromise
-        await stripe?.redirectToCheckout({ sessionId })
+        setServices((prev) => prev.map((item) => (item.id === id ? { ...item, status: "paid" } : item)))
       }
-      
+
       setShowPaymentModal(null)
     } catch (error) {
-      console.error("Erreur de paiement:", error)
+      console.error("Payment error:", error)
     }
   }
 
@@ -298,7 +201,7 @@ export default function PaymentsPage() {
           <div className="flex items-center">
             <Link href="/app_client">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+                src="/logo.png"
                 alt="EcoDeli Logo"
                 width={120}
                 height={40}

@@ -1,5 +1,10 @@
 import ServiceProviderIntervention from "@/components/service-provider/intervention"
+import ServiceProviderLayout from "@/components/service-provider/layout"
 
 export default function ServiceProviderInterventionPage() {
-    return <ServiceProviderIntervention/>
+    return (
+        <ServiceProviderLayout>
+            <ServiceProviderIntervention />
+        </ServiceProviderLayout>
+    )
 }

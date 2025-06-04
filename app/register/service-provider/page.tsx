@@ -11,9 +11,7 @@ export default function ServiceProviderRegisterPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
+    password: ""
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -27,20 +25,50 @@ export default function ServiceProviderRegisterPage() {
     e.preventDefault()
     setError("")
 
-    // Validation basique
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
-      // Simuler l'envoi des données d'inscription (à remplacer par votre logique réelle)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const token =
+        sessionStorage.getItem('authToken') ||
+        localStorage.getItem('authToken');
+      if (!token) return;
 
-      console.log("Service Provider registration:", formData)
-      router.push("/verify-email") // Rediriger vers la vérification d'email
+      const currentAccount = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          credentials: "include",
+        }
+      )
+
+      const supposedAccount = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            email: formData.email, 
+            password: formData.password }),
+          credentials: "include",
+        }
+      )
+
+      const currentAccountData = await currentAccount.json();
+      const supposedAccountData = await supposedAccount.json();
+
+      if (currentAccountData.email !== supposedAccountData.user.email) {
+        console.log("Token mismatch")
+        console.log(token, supposedAccountData.token)
+        throw Error("Token mismatch");
+      }
+
+      router.push("/documents-verification/service-provider")
     } catch (err) {
       setError("Registration failed. Please try again.")
     } finally {
@@ -56,14 +84,14 @@ export default function ServiceProviderRegisterPage() {
 
       <div className="bg-white rounded-lg p-8 w-full max-w-md mx-4 shadow-md">
         <h1 className="text-2xl font-semibold text-center mb-2">Create an Account</h1>
-        <p className="text-gray-600 text-center mb-6">Create an account as a Service provider</p>
+        <p className="text-gray-600 text-center mb-6">Create an account as a Service Provider</p>
 
         {error && <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-center text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-gray-700 mb-1">
-              Email address:
+              Confirm Email address:
             </label>
             <input
               id="email"
@@ -72,22 +100,6 @@ export default function ServiceProviderRegisterPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="Enter your email"
-              className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-gray-700 mb-1">
-              Phone number
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter your phone number"
               className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
               required
             />
@@ -109,39 +121,16 @@ export default function ServiceProviderRegisterPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-gray-700 mb-1">
-              Confirm your password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm your password"
-              className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400"
-              required
-            />
-          </div>
-
           <div className="pt-4">
             <button
               type="submit"
               disabled={isSubmitting}
               className="w-full py-3 bg-green-300 text-gray-700 rounded-md hover:bg-green-400 transition-colors disabled:opacity-70"
             >
-              {isSubmitting ? "Signing Up..." : "Sign Up"}
+              {isSubmitting ? "Creating account..." : "Create Account"}
             </button>
           </div>
         </form>
-
-        <div className="text-center mt-6">
-          <span className="text-gray-600">Already have an account? </span>
-          <Link href="/login" className="text-green-500 hover:underline">
-            Login
-          </Link>
-        </div>
       </div>
     </div>
   )

@@ -439,4 +439,3 @@ const handleSendMessage = (e: React.FormEvent) => {
     </div>
   )
 }
-

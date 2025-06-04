@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ClientsChart } from "@/components/back-office/clients-chart"
 import { StatCard } from "@/components/back-office/stat-card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,6 +11,69 @@ import { useRouter } from "next/navigation"
 
 export function DashboardContent() {
   const { t } = useLanguage()
+  const router = useRouter()
+  const [users, setUsers] = useState([
+    {
+      first_name: "",
+      last_name: "",
+      address: "",
+      role: "",
+      created_at: "",
+    }
+  ])
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const token = sessionStorage.getItem("authToken") || localStorage.getItem("authToken")
+      if (!token) {
+        router.push("/login")
+        return
+      }
+
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/get-recent`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: "include",
+        })
+
+        if (!response.ok) throw new Error("Unauthorized")
+        const userData = await response.json()
+        setUsers(userData)
+      } catch (err) {
+        console.error("Fetch recent users failed:", err)
+      }
+    }
+
+    fetchUsers()
+      
+  }, [])
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("authToken") || localStorage.getItem("authToken")
+    if (!token) return
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized")
+        return res.json()
+      })
+      .then((data) => {
+        if (data.role !== "admin") {
+          router.push("/app_client")
+        }
+      })
+      .catch((err) => console.error("Auth/me failed:", err))
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -51,52 +114,16 @@ export function DashboardContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {[
-                      {
-                        name: "Doe",
-                        firstName: "John",
-                        address: "123 Main St, Paris",
-                        account: "Deliveryman",
-                        date: "2025-04-01",
-                      },
-                      {
-                        name: "Smith",
-                        firstName: "Jane",
-                        address: "456 Oak Ave, Lyon",
-                        account: "User",
-                        date: "2025-04-02",
-                      },
-                      {
-                        name: "Johnson",
-                        firstName: "Robert",
-                        address: "789 Pine Rd, Marseille",
-                        account: "Shopkeeper",
-                        date: "2025-04-03",
-                      },
-                      {
-                        name: "Davis",
-                        firstName: "Emily",
-                        address: "321 Cedar Ln, Bordeaux",
-                        account: "Service Provider",
-                        date: "2025-04-04",
-                      },
-                      {
-                        name: "Brown",
-                        firstName: "Michael",
-                        address: "654 Elm Blvd, Nice",
-                        account: "User",
-                        date: "2025-04-05",
-                      },
-                    ].map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.name}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.firstName}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.account}</td>
+                    {users.map((item) => (
+                        <tr key={`${item.last_name}-${item.first_name}`} className="hover:bg-gray-50">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.first_name}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.last_name}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address != null ? item.address : "No Address"}</td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.role}</td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                          {new Date(item.date).toLocaleDateString()}
+                          {new Date(item.created_at).toLocaleDateString('fr-FR')}
                         </td>
-                      </tr>
+                        </tr>
                     ))}
                   </tbody>
                 </table>
@@ -105,10 +132,9 @@ export function DashboardContent() {
           </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <StatCard title="Number of contract" value="83.9 K" change="+9.7 K this month" positive={true} />
-        <StatCard title="Numbers of the month" value="£ 76 K" change="+5.4% than last month" positive={true} />
+        <StatCard title={t("admin.numberContracts")} value="83.9 K" change="+9.7 K this month" positive={true} />
+        <StatCard title={t("admin.numberMonth")} value="£ 76 K" change="+5.4% than last month" positive={true} />
       </div>
     </div>
   )
 }
-

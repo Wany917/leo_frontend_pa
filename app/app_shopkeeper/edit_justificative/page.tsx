@@ -1,5 +1,5 @@
-import ShopkeeperEditJustificative from "@/components/shopkeeper/edit-justificative"
+import ShopkeeperEditJustificative from '@/components/shopkeeper/edit-justificative';
 
-export default function ServiceProviderEditJustificativePage() {
-  return <ShopkeeperEditJustificative/>
+export default function ShopkeeperEditJustificativePage() {
+	return <ShopkeeperEditJustificative />;
 }

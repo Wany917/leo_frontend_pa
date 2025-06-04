@@ -2,28 +2,21 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Package, ArrowRight, Truck, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/components/language-context"
-import { formatDate } from '@/app/utils/date-formats'
-
-interface TrackingItem {
-  id: string;
-  status: "delivered" | "in-transit";
-  from: string;
-  to: string;
-  estimatedDelivery: string;
-}
 
 export default function TrackingClient() {
   const { t } = useLanguage()
   const router = useRouter()
   const [trackingId, setTrackingId] = useState("")
   const [error, setError] = useState("")
-  const [recentlyTracked, setRecentlyTracked] = useState<TrackingItem[]>([
+
+  // Données récentes de suivi (simulées)
+  const recentlyTracked = [
     {
       id: "ECO-123456",
       status: "in-transit",
@@ -38,43 +31,7 @@ export default function TrackingClient() {
       to: "Madrid, Spain",
       estimatedDelivery: "April 30, 2025",
     },
-  ])
-
-  useEffect(() => {
-    fetchRecentTracking()
-  }, [])
-
-  const fetchRecentTracking = async () => {
-    try {
-      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-      if (!token) return
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/colis`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (Array.isArray(data) && data.length > 0) {
-          // Traiter les données pour les adapter au format attendu par le composant
-          const recentData: TrackingItem[] = data.map((item: any) => ({
-            id: item.trackingNumber || "Unknown",
-            status: item.status === "delivered" ? "delivered" : "in-transit",
-            from: item.currentAddress || "N/A",
-            to: item.destination || "N/A",
-            estimatedDelivery: formatDate(item.estimatedDeliveryDate)
-          }))
-          setRecentlyTracked(recentData)
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching tracking data:", error)
-      // En cas d'erreur, conserver les données par défaut
-    }
-  }
+  ]
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,7 +50,7 @@ export default function TrackingClient() {
         <div className="container mx-auto px-4 py-3">
           <Link href="/">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+              src="/logo.png"
               alt="EcoDeli Logo"
               width={120}
               height={40}

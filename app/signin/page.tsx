@@ -5,8 +5,9 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronDownIcon, CheckIcon } from "lucide-react"
+import { useLanguage } from "@/components/language-context"
 
-type AccountType = "Client" | "Delivery" | "Provider" | "Merchant"
+type AccountType = "Client" | "DeliveryMan" | "ServiceProvider" | "Shopkeeper"
 
 interface AccountOption {
   id: AccountType
@@ -15,6 +16,7 @@ interface AccountOption {
 }
 
 export default function SignupPage() {
+  const { t } = useLanguage()
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -35,14 +37,15 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
+  const [error, setError] = useState("") // État pour afficher les erreurs
 
   const countries = ["France", "United Kingdom", "Germany", "Spain", "Italy", "Belgium", "Netherlands", "Switzerland"]
 
   const accountOptions: AccountOption[] = [
-    { id: "Client", label: "Client", requiresDocuments: false },
-    { id: "Delivery", label: "Delivery Man", requiresDocuments: true },
-    { id: "Provider", label: "Service Provider", requiresDocuments: true },
-    { id: "Merchant", label: "Merchant", requiresDocuments: true },
+    { id: "Client", label: t("auth.client"), requiresDocuments: false },
+    { id: "DeliveryMan", label: t("auth.deliveryMan"), requiresDocuments: true },
+    { id: "ServiceProvider", label: t("auth.serviceProvider"), requiresDocuments: true },
+    { id: "Shopkeeper", label: t("auth.shopkeeper"), requiresDocuments: true },
   ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,8 +66,36 @@ export default function SignupPage() {
     })
   }
 
+  const validatePassword = (password: string): boolean => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
+    return passwordRegex.test(password)
+  }
+
+  const areAllFieldsFilled = (): boolean => {
+    return Object.entries(formData).every(([key, value]) => value.trim() !== "")
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("") // Réinitialiser l'erreur
+
+    // Vérification que tous les champs sont remplis
+    if (!areAllFieldsFilled()) {
+      setError(t("auth.allFieldsRequired"))
+      return
+    }
+
+    // Validation du mot de passe
+    if (!validatePassword(formData.password)) {
+      setError(t("auth.passwordRequirements"))
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError(t("auth.passwordsDoNotMatch"))
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -74,43 +105,58 @@ export default function SignupPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_info: JSON.stringify(formData)
+            user_info: `{'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}`
           }),
         }
       )
       if (!genRes.ok) {
-        console.log(JSON.stringify({ user_info: JSON.stringify(formData) }))
         throw new Error("failed to generate code")
       }
       const { code: verificationCode } = await genRes.json()
-      
-      await fetch(process.env.NEXT_PUBLIC_API_URL + "/send-email", {
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: formData.email,
-          subject: "Your EcoDeli Verification Code",
+          subject: t("auth.verificationEmailSubject"),
           body: `
-            <h2>Welcome to EcoDeli 👋</h2>
-            <p>Thank you for signing up, ${formData.firstname}!</p>
-            <p>Your verification code is:</p>
+            <h2>${t("auth.welcomeToEcoDeli")}</h2>
+            <p>${t("auth.thankYouForSigningUp", { firstname: formData.firstname })}</p>
+            <p>${t("auth.yourVerificationCode")}:</p>
             <h3 style="font-size: 24px; color: #10B981;">${verificationCode}</h3>
-            <p>Please enter this code to verify your account.</p>
+            <p>${t("auth.enterCodeToVerify")}</p>
           `,
         }),
       })
 
       const requiresDocuments = selectedAccounts.some(
-        (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments,
+        (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments
       )
 
       if (requiresDocuments) {
-        router.push("/documents-verification")
-      } else {
-        sessionStorage.setItem(
-          "signupInfo",
-          JSON.stringify({ formData })
+        // Rediriger vers la page de téléchargement des documents en fonction du compte
+        const accountWithDocuments = selectedAccounts.find(
+          (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments
         )
+
+        switch (accountWithDocuments) {
+          case "DeliveryMan":
+            router.push("/documents-verification/deliveryman")
+            break
+          case "ServiceProvider":
+            router.push("/documents-verification/service-provider")
+            break
+          case "Shopkeeper":
+            router.push("/documents-verification/shopkeeper")
+            break
+          default:
+            router.push("/documents-verification")
+            break
+        }
+      } else {
+        // Rediriger vers la vérification d'e-mail
+        sessionStorage.setItem("signupInfo", JSON.stringify({ formData }))
         router.push("/verify-email")
       }
     } catch (error) {
@@ -123,9 +169,15 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50">
       <div className="bg-white rounded-3xl p-8 w-full max-w-5xl mx-4 my-8">
-        <h1 className="text-2xl font-semibold text-center mb-2">Create an Account</h1>
+        <h1 className="text-2xl font-semibold text-center mb-2">{t("auth.createAccount")}</h1>
 
-        <p className="text-gray-600 text-center mb-8">Create an account to continue</p>
+        <p className="text-gray-600 text-center mb-8">{t("auth.createAccountDescription")}</p>
+
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -133,7 +185,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-gray-700 mb-2">
-                  Name
+                  {t("auth.name")}
                 </label>
                 <input
                   id="name"
@@ -141,7 +193,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter your name"
+                  placeholder={t("auth.enterName")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -149,7 +201,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="firstname" className="block text-gray-700 mb-2">
-                  First Name
+                  {t("auth.firstName")}
                 </label>
                 <input
                   id="firstname"
@@ -157,7 +209,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.firstname}
                   onChange={handleChange}
-                  placeholder="Enter your first name"
+                  placeholder={t("auth.enterFirstName")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -165,7 +217,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="dateOfBirth" className="block text-gray-700 mb-2">
-                  Date of birth
+                  {t("auth.dateOfBirth")}
                 </label>
                 <div className="relative">
                   <input
@@ -174,7 +226,7 @@ export default function SignupPage() {
                     type="text"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
-                    placeholder="Enter your date of birth"
+                    placeholder={t("auth.enterDateOfBirth")}
                     className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                     required
                     onFocus={(e) => (e.target.type = "date")}
@@ -183,7 +235,7 @@ export default function SignupPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">Account Types</label>
+                <label className="block text-gray-700 mb-2">{t("auth.accountTypes")}</label>
                 <div className="relative">
                   <button
                     type="button"
@@ -193,7 +245,7 @@ export default function SignupPage() {
                     <span>
                       {selectedAccounts.length === 1
                         ? accountOptions.find((opt) => opt.id === selectedAccounts[0])?.label
-                        : `${selectedAccounts.length} account types selected`}
+                        : t("auth.multipleAccountTypesSelected", { count: selectedAccounts.length })}
                     </span>
                     <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                   </button>
@@ -217,7 +269,7 @@ export default function SignupPage() {
                 </div>
                 {selectedAccounts.some((type) => type !== "Client") && (
                   <p className="text-sm text-amber-600 mt-2">
-                    Note: Additional documents will be required for the selected professional accounts.
+                    {t("auth.additionalDocumentsRequired")}
                   </p>
                 )}
               </div>
@@ -227,7 +279,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               <div>
                 <label htmlFor="email" className="block text-gray-700 mb-2">
-                  Email address
+                  {t("auth.email")}
                 </label>
                 <input
                   id="email"
@@ -235,7 +287,7 @@ export default function SignupPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="Enter your email"
+                  placeholder={t("auth.enterEmail")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -243,7 +295,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="phone" className="block text-gray-700 mb-2">
-                  Phone number
+                  {t("auth.phone")}
                 </label>
                 <input
                   id="phone"
@@ -251,7 +303,7 @@ export default function SignupPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="Enter your phone number"
+                  placeholder={t("auth.enterPhone")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -259,7 +311,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="password" className="block text-gray-700 mb-2">
-                  Password
+                  {t("auth.password")}
                 </label>
                 <input
                   id="password"
@@ -267,7 +319,7 @@ export default function SignupPage() {
                   type="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Enter your password"
+                  placeholder={t("auth.enterPassword")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -275,7 +327,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="confirmPassword" className="block text-gray-700 mb-2">
-                  Confirm your password
+                  {t("auth.confirmPassword")}
                 </label>
                 <input
                   id="confirmPassword"
@@ -283,7 +335,7 @@ export default function SignupPage() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  placeholder="Confirm your password"
+                  placeholder={t("auth.confirmPasswordPlaceholder")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -293,7 +345,7 @@ export default function SignupPage() {
             <div className="space-y-6">
               <div>
                 <label htmlFor="address" className="block text-gray-700 mb-2">
-                  Address
+                  {t("auth.address")}
                 </label>
                 <input
                   id="address"
@@ -301,7 +353,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.address}
                   onChange={handleChange}
-                  placeholder="Enter your address"
+                  placeholder={t("auth.enterAddress")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -309,7 +361,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="city" className="block text-gray-700 mb-2">
-                  City
+                  {t("auth.city")}
                 </label>
                 <input
                   id="city"
@@ -317,7 +369,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.city}
                   onChange={handleChange}
-                  placeholder="Enter your city"
+                  placeholder={t("auth.enterCity")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -325,7 +377,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="postalCode" className="block text-gray-700 mb-2">
-                  Postal code
+                  {t("auth.postalCode")}
                 </label>
                 <input
                   id="postalCode"
@@ -333,7 +385,7 @@ export default function SignupPage() {
                   type="text"
                   value={formData.postalCode}
                   onChange={handleChange}
-                  placeholder="Enter your postal code"
+                  placeholder={t("auth.enterPostalCode")}
                   className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                   required
                 />
@@ -341,7 +393,7 @@ export default function SignupPage() {
 
               <div>
                 <label htmlFor="country" className="block text-gray-700 mb-2">
-                  Country
+                  {t("auth.country")}
                 </label>
                 <div className="relative">
                   <button
@@ -349,7 +401,7 @@ export default function SignupPage() {
                     className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50 text-left flex justify-between items-center"
                     onClick={() => setShowCountryDropdown(!showCountryDropdown)}
                   >
-                    <span>{formData.country || "Select your country"}</span>
+                    <span>{formData.country || t("auth.selectCountry")}</span>
                     <ChevronDownIcon className="h-5 w-5 text-gray-400" />
                   </button>
 
@@ -378,13 +430,13 @@ export default function SignupPage() {
               disabled={isSubmitting}
               className="px-12 py-3 bg-green-50 text-white rounded-md hover:bg-green-400 transition-colors disabled:opacity-70"
             >
-              {isSubmitting ? "Creating Account..." : "Sign Up"}
+              {isSubmitting ? t("auth.creatingAccount") : t("auth.signUp")}
             </button>
 
             <div className="mt-4 text-center">
-              <span className="text-gray-600">Already have an account? </span>
+              <span className="text-gray-600">{t("auth.alreadyHaveAccount")} </span>
               <Link href="/login" className="text-green-50 hover:underline">
-                Login
+                {t("auth.login")}
               </Link>
             </div>
           </div>

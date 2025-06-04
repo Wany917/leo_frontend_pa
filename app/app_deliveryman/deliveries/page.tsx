@@ -1,5 +1,7 @@
+"use client"
+
 import DeliverymanDeliveries from "@/components/deliveryman/deliveries"
 
-export default function DeliverymanDeliveriesPage() {
+export default function DeliveriesPage() {
   return <DeliverymanDeliveries />
 }

@@ -1,8 +1,10 @@
 "use client"
 
 import { ServiceTable } from "@/components/back-office/service-table"
+import { useLanguage } from "@/components/language-context"
 
 export function ServicesContent() {
+  const { t } = useLanguage()
   // Données fictives pour les services
   const servicesData = [
     {
@@ -33,7 +35,7 @@ export function ServicesContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Services</h1>
+      <h1 className="text-2xl font-bold">{t("admin.services")}</h1>
       <ServiceTable data={servicesData} />
     </div>
   )

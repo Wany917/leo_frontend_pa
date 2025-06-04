@@ -222,7 +222,7 @@ export default function ShopkeeperDashboard() {
 
                 <div className="border-t border-gray-100 my-1"></div>
 
-                <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                <Link href="/app_client" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                   <User className="h-4 w-4 mr-2" />
                   {t("common.clientSpace")}
                 </Link>

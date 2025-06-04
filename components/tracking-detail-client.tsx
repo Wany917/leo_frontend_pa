@@ -5,7 +5,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Package, Truck, CheckCircle, MapPin, Calendar, Download, AlertCircle } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
-import { formatDate, formatTime } from '@/app/utils/date-formats'
 
 // Types pour les données de suivi
 interface TrackingEvent {
@@ -33,113 +32,64 @@ export default function TrackingDetailClient({ id }: { id: string }) {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchPackageDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/colis/${id}/tracking`);
-        
-        if (!response.ok) {
-          setError(t("tracking.errorFetchingPackage"));
-          setLoading(false);
-          return;
-        }
-        
-        const data = await response.json();
-        
-        if (!data.colis) {
-          setError(t("tracking.packageNotFound"));
-          setLoading(false);
-          return;
-        }
-        
-        const { colis, locationHistory } = data;
-        
-        // Convertir les données API en format attendu par le composant
-        const trackingData: TrackingData = {
-          id: colis.trackingNumber || id,
-          status: getPackageStatus(colis.status),
-          packageName: colis.contentDescription || "Package",
-          sender: colis.annonce?.utilisateur?.firstName || "Unknown",
-          recipient: "Client",
-          origin: colis.annonce?.starting_address || "Unknown",
-          destination: colis.annonce?.destination_address || colis.currentAddress || "Unknown",
-          estimatedDelivery: formatDate(colis.estimatedDeliveryDate),
-          shippedDate: formatDate(colis.createdAt),
-          events: []
-        };
-        
-        // Traiter l'historique des locations
-        if (locationHistory && Array.isArray(locationHistory) && locationHistory.length > 0) {
-          trackingData.events = locationHistory.map((event: any) => ({
-            date: formatDate(event.movedAt || event.createdAt),
-            time: formatTime(event.movedAt || event.createdAt),
-            location: event.address || "Unknown",
-            status: mapLocationType(event.locationType),
-            description: event.description || "Status update"
-          }));
-        } else {
-          // Si pas d'historique, ajouter un événement initial
-          trackingData.events = [{
-            date: formatDate(colis.createdAt),
-            time: formatTime(colis.createdAt),
-            location: "System",
+    // Simuler le chargement des données de suivi
+    const timer = setTimeout(() => {
+      // Dans une application réelle, vous feriez un appel API ici
+      const mockData: TrackingData = {
+        id,
+        status: "in-transit",
+        packageName: "Running Shoes",
+        sender: "SportShop Paris",
+        recipient: "John Doe",
+        origin: "Paris, France",
+        destination: "London, UK",
+        estimatedDelivery: "May 15, 2025",
+        shippedDate: "May 5, 2025",
+        events: [
+          {
+            date: "May 8, 2025",
+            time: "14:30",
+            location: "Distribution Center, Calais",
+            status: "in-transit",
+            description: "Package in transit to next facility",
+          },
+          {
+            date: "May 7, 2025",
+            time: "09:15",
+            location: "Sorting Facility, Paris",
+            status: "in-transit",
+            description: "Package sorted and processed",
+          },
+          {
+            date: "May 6, 2025",
+            time: "16:45",
+            location: "Collection Point, Paris",
+            status: "in-transit",
+            description: "Package received at collection point",
+          },
+          {
+            date: "May 5, 2025",
+            time: "10:00",
+            location: "Sender Location, Paris",
             status: "pending",
-            description: "Package registered"
-          }];
-        }
-        
-        setTrackingData(trackingData);
-      } catch (error) {
-        console.error("Error fetching package details:", error);
-        setError(t("tracking.errorFetchingPackage"));
-      } finally {
-        setLoading(false);
+            description: "Shipping label created",
+          },
+        ],
       }
-    };
-    
-    fetchPackageDetails();
-  }, [id, t]);
 
-  // Convertir le statut du colis en format de l'interface
-  const getPackageStatus = (status: string): "pending" | "in-transit" | "delivered" | "exception" => {
-    switch (status) {
-      case "delivered":
-        return "delivered";
-      case "in_transit":
-        return "in-transit";
-      case "stored":
-        return "pending";
-      default:
-        return "pending";
-    }
-  };
-  
-  // Convertir les types de localisation en format d'affichage
-  const mapLocationType = (locationType: string): string => {
-    switch (locationType) {
-      case "client_address":
-        return "client-address";
-      case "warehouse":
-        return "warehouse";
-      case "in_transit":
-        return "in-transit";
-      case "storage_box":
-        return "storage-box";
-      default:
-        return locationType || "unknown";
-    }
-  };
+      setTrackingData(mockData)
+      setLoading(false)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [id])
 
   // Fonction pour obtenir la couleur et l'icône en fonction du statut
   const getStatusInfo = (status: string) => {
     switch (status) {
       case "pending":
-      case "client-address":
-      case "warehouse":
-      case "storage-box":
         return {
           color: "bg-yellow-100 text-yellow-800",
           icon: <Package className="h-5 w-5 text-yellow-600" />,
@@ -180,35 +130,35 @@ export default function TrackingDetailClient({ id }: { id: string }) {
     )
   }
 
-  if (error || !trackingData) {
+  if (!trackingData) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4">
-            <Link href="/app_client/tracking" className="flex items-center text-gray-600 hover:text-green-500">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              {t("tracking.backToTracking")}
+          <div className="container mx-auto px-4 py-3">
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="EcoDeli Logo"
+                width={120}
+                height={40}
+                className="h-auto"
+              />
             </Link>
           </div>
         </header>
-        
+
         <main className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-            <div className="text-center py-8">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">{t("tracking.packageNotFound")}</h2>
-              <p className="text-gray-600">{error || t("tracking.noInformationAvailable")}</p>
-              <Link 
-                href="/app_client/tracking" 
-                className="mt-6 inline-block bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-              >
-                {t("tracking.tryAnother")}
-              </Link>
-            </div>
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-2xl font-semibold mb-4">{t("tracking.packageNotFound")}</h1>
+            <p className="text-gray-600 mb-6">{t("tracking.invalidTrackingId")}</p>
+            <Link href="/tracking" className="inline-flex items-center text-green-500 hover:text-green-600">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t("tracking.backToTracking")}
+            </Link>
           </div>
         </main>
       </div>
-    );
+    )
   }
 
   const statusInfo = getStatusInfo(trackingData.status)
@@ -216,105 +166,129 @@ export default function TrackingDetailClient({ id }: { id: string }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <Link href="/app_client/tracking" className="flex items-center text-gray-600 hover:text-green-500">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            {t("tracking.backToTracking")}
+        <div className="container mx-auto px-4 py-3">
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="EcoDeli Logo"
+              width={120}
+              height={40}
+              className="h-auto"
+            />
           </Link>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          {/* En-tête du suivi */}
+          <div className="mb-6">
+            <Link href="/tracking" className="inline-flex items-center text-gray-600 hover:text-green-500">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t("tracking.backToTracking")}
+            </Link>
+          </div>
+
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <div>
-                <h1 className="text-2xl font-semibold text-gray-800 mb-1">{trackingData.packageName}</h1>
-                <p className="text-gray-500">{t("tracking.trackingNumber")}: {trackingData.id}</p>
+                <h1 className="text-2xl font-semibold">{t("tracking.trackingDetails")}</h1>
+                <p className="text-gray-500">
+                  {t("tracking.trackingId")}: {trackingData.id}
+                </p>
               </div>
-              <div className={`${statusInfo.color} px-3 py-1 rounded-full flex items-center mt-2 sm:mt-0`}>
+              <div className={`mt-2 sm:mt-0 px-3 py-1 rounded-full ${statusInfo.color} flex items-center`}>
                 {statusInfo.icon}
-                <span className="ml-1 text-sm font-medium">{statusInfo.text}</span>
+                <span className="ml-2 font-medium">{statusInfo.text}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h2 className="text-sm font-medium text-gray-500 mb-1">{t("tracking.from")}</h2>
-                <p className="text-gray-800">{trackingData.origin}</p>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">{t("tracking.packageInfo")}</h2>
+                <p className="font-medium">{trackingData.packageName}</p>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500 mb-1">{t("tracking.sender")}</p>
+                  <p>{trackingData.sender}</p>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500 mb-1">{t("tracking.recipient")}</p>
+                  <p>{trackingData.recipient}</p>
+                </div>
               </div>
+
               <div>
-                <h2 className="text-sm font-medium text-gray-500 mb-1">{t("tracking.to")}</h2>
-                <p className="text-gray-800">{trackingData.destination}</p>
+                <div className="flex items-start mb-4">
+                  <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">{t("tracking.from")}</p>
+                    <p className="font-medium">{trackingData.origin}</p>
+                  </div>
+                </div>
+                <div className="flex items-start mb-4">
+                  <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">{t("tracking.to")}</p>
+                    <p className="font-medium">{trackingData.destination}</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-gray-500">{t("tracking.estimatedDelivery")}</p>
+                    <p className="font-medium">{trackingData.estimatedDelivery}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="text-sm font-medium text-gray-500 mb-1">{t("tracking.estimatedDelivery")}</h2>
-                <p className="text-gray-800">{trackingData.estimatedDelivery}</p>
-              </div>
-              <div>
-                <h2 className="text-sm font-medium text-gray-500 mb-1">{t("tracking.shipped")}</h2>
-                <p className="text-gray-800">{trackingData.shippedDate}</p>
-              </div>
+            </div>
+
+            <div className="flex justify-between mt-6 pt-6 border-t border-gray-200">
+              <button className="flex items-center text-green-500 hover:text-green-600">
+                <Download className="h-5 w-5 mr-2" />
+                {t("tracking.downloadInvoice")}
+              </button>
+              <button className="flex items-center text-red-500 hover:text-red-600">
+                <AlertCircle className="h-5 w-5 mr-2" />
+                {t("tracking.reportIssue")}
+              </button>
             </div>
           </div>
 
-          {/* Historique de suivi */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">{t("tracking.deliveryHistory")}</h2>
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-6">{t("tracking.shipmentProgress")}</h2>
 
-            <div className="divide-y divide-gray-100">
+            <div className="space-y-6">
               {trackingData.events.map((event, index) => {
-                const eventStatusInfo = getStatusInfo(event.status)
+                const eventStatus = getStatusInfo(event.status)
                 return (
-                  <div key={index} className="px-6 py-4">
-                    <div className="flex items-start">
-                      <div className="mt-1 mr-4">{eventStatusInfo.icon}</div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium text-gray-800">{event.status === "in-transit" ? t("tracking.inTransit") : event.status}</h3>
-                            <p className="text-gray-600 text-sm">{event.description}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-800">{event.date}</p>
-                            <p className="text-xs text-gray-500">{event.time}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          <MapPin className="h-4 w-4 inline-block mr-1 text-gray-400" />
-                          {event.location}
-                        </p>
+                  <div key={index} className="relative pl-8">
+                    {index < trackingData.events.length - 1 && (
+                      <div className="absolute left-[0.9375rem] top-6 bottom-0 w-0.5 bg-gray-200"></div>
+                    )}
+                    <div className="absolute left-0 top-1">
+                      <div className={`p-1 rounded-full ${index === 0 ? "bg-green-100" : "bg-gray-100"}`}>
+                        {eventStatus.icon}
                       </div>
+                    </div>
+                    <div>
+                      <p className="font-medium">{event.description}</p>
+                      <p className="text-sm text-gray-500">{event.location}</p>
+                      <p className="text-sm text-gray-500">
+                        {event.date} • {event.time}
+                      </p>
                     </div>
                   </div>
                 )
               })}
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="mt-6 flex flex-col sm:flex-row gap-4">
-            <Link 
-              href={`/app_client/tracking/email-template?id=${trackingData.id}`}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {t("tracking.receiveByEmail")}
-            </Link>
-            
-            <Link 
-              href="/app_client/complaint/create"
-              className="border border-green-500 text-green-500 px-4 py-2 rounded-lg flex items-center justify-center hover:bg-green-50 transition-colors"
-            >
-              <AlertCircle className="h-4 w-4 mr-2" />
-              {t("tracking.reportProblem")}
-            </Link>
-          </div>
         </div>
       </main>
+
+      <footer className="bg-white border-t mt-12 py-6">
+        <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+          <p>&copy; 2025 EcoDeli. {t("common.allRightsReserved")}</p>
+        </div>
+      </footer>
     </div>
   )
 }

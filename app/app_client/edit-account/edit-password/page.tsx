@@ -138,7 +138,7 @@ export default function ChangePasswordPage() {
           <div className="flex items-center">
             <Link href="/app_client">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+                src="/logo.png"
                 alt="EcoDeli Logo"
                 width={120}
                 height={40}

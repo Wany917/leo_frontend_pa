@@ -53,7 +53,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
         image: "/dog-sitter.jpg",
       },
     ]
-    const serviceId = Number.parseInt(id, 10)
+    const serviceId = Number.parseInt(id as string, 10)
     const found = services.find((s) => s.id === serviceId)
     if (found) {
       setService(found)

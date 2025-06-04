@@ -138,7 +138,7 @@ export default function MessageDetailPage() {
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
             <p>{t("messages.conversationNotFound")}</p>
-            <Link href="/app_client/messages" className="mt-4 inline-block text-green-500 hover:underline">
+            <Link href="/app_service-provider/messages" className="mt-4 inline-block text-green-500 hover:underline">
               {t("messages.returnToMessages")}
             </Link>
           </div>
@@ -155,7 +155,7 @@ export default function MessageDetailPage() {
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
           {/* Conversation Header */}
           <div className="p-4 border-b flex items-center">
-            <Link href="/app_client/messages" className="text-gray-600 hover:text-green-500 mr-4">
+            <Link href="/app_service-provider/messages" className="text-gray-600 hover:text-green-500 mr-4">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="relative">

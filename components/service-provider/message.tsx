@@ -52,7 +52,7 @@ export default function ServiceProviderMessage() {
       recipientId: "d1",
       recipientName: "Thomas (Delivery)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "delivery",
+      recipientType: "client",
       lastMessage: "Your package will be delivered tomorrow between 2-4 PM.",
       lastMessageTime: "2025-04-02T14:30:00",
       unreadCount: 1,
@@ -92,7 +92,7 @@ export default function ServiceProviderMessage() {
       recipientId: "s1",
       recipientName: "Emma (Baby-sitter)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "service",
+      recipientType: "client",
       serviceType: "Baby-sitting",
       lastMessage: "I can take care of your children this Saturday from 7 PM.",
       lastMessageTime: "2025-04-02T09:45:00",
@@ -151,7 +151,7 @@ export default function ServiceProviderMessage() {
       recipientId: "d2",
       recipientName: "Lucas (Delivery)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "delivery",
+      recipientType: "client",
       lastMessage: "I've picked up your package from the storage box.",
       lastMessageTime: "2025-04-01T16:20:00",
       unreadCount: 0,
@@ -200,7 +200,7 @@ export default function ServiceProviderMessage() {
       recipientId: "s2",
       recipientName: "Charlotte (Dog-sitter)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "service",
+      recipientType: "client",
       serviceType: "Dog-sitting",
       lastMessage: "Your dog is doing great! We just came back from a walk.",
       lastMessageTime: "2025-04-02T11:05:00",
@@ -494,7 +494,7 @@ export default function ServiceProviderMessage() {
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <Link href="/app_client" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                     <User className="h-4 w-4 mr-2" />
                     {t("common.clientSpace")}
                   </Link>

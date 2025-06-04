@@ -55,7 +55,7 @@ export default function HomeClient() {
         <div className="flex gap-2">
           <Link
             href="/signin"
-            className="px-4 py-2 rounded-md bg-green-100 text-green-50 hover:bg-green-200 transition-colors"
+            className="px-4 py-2 rounded-md bg-green-100 text-green-500 hover:bg-green-200 transition-colors"
           >
             {t("common.signup")}
           </Link>
@@ -190,7 +190,7 @@ export default function HomeClient() {
             <div className="border rounded-lg p-6">
               <h3 className="font-medium mb-4">{t("home.free")}</h3>
               <div className="flex items-baseline mb-6">
-                <span className="text-3xl font-bold">$0</span>
+                <span className="text-3xl font-bold">0 €</span>
                 <span className="text-gray-600 ml-1">/{t("home.month")}</span>
               </div>
               <p className="text-gray-600 mb-6">{t("home.forSmallOccasions")}</p>
@@ -211,7 +211,7 @@ export default function HomeClient() {
             <div className="border rounded-lg p-6">
               <h3 className="font-medium mb-4">{t("home.starter")}</h3>
               <div className="flex items-baseline mb-6">
-                <span className="text-3xl font-bold">£9.90</span>
+                <span className="text-3xl font-bold">9.90 €</span>
                 <span className="text-gray-600 ml-1">/{t("home.month")}</span>
               </div>
               <p className="text-gray-600 mb-6">{t("home.idealForMonthly")}</p>
@@ -244,10 +244,10 @@ export default function HomeClient() {
             <div className="bg-green-50 text-white rounded-lg p-6">
               <h3 className="font-medium mb-4">{t("home.premium")}</h3>
               <div className="flex items-baseline mb-6">
-                <span className="text-3xl font-bold">£19.99</span>
-                <span className="text-green-100 ml-1">/{t("home.month")}</span>
+                <span className="text-3xl font-bold">19.99 €</span>
+                <span className="text-white ml-1">/{t("home.month")}</span>
               </div>
-              <p className="text-green-100 mb-6">{t("home.idealForWeekly")}</p>
+              <p className="text-white mb-6">{t("home.idealForWeekly")}</p>
 
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start">

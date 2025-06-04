@@ -230,7 +230,7 @@ export default function ServiceProviderEditAccount() {
 
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-medium">{t("auth.editJustificative")}</h2>
-                <Link href="/app_service-provider/edit_justificative" className="text-sm text-green-500 hover:underline">
+                <Link href="/app_service-provider/edit-justificative" className="text-sm text-green-500 hover:underline">
                   {t("auth.editJustificative")}
                 </Link>
               </div>

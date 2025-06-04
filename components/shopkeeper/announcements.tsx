@@ -159,7 +159,7 @@ export default function ShopkeeperAnnouncementsPage() {
 
                 <div className="border-t border-gray-100 my-1"></div>
 
-                <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                <Link href="/app_client" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                   <User className="h-4 w-4 mr-2" />
                   {t("common.clientSpace")}
                 </Link>
@@ -207,7 +207,7 @@ export default function ShopkeeperAnnouncementsPage() {
             <div key={announcement.id} className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="h-48 relative bg-green-200">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Capture%20d%E2%80%99e%CC%81cran%202025-03-31%20a%CC%80%2020.01.59-jjYWcMxzH05nScY2mIZQMz1nXvfZ41.png"
+                  src="/placeholder.svg"
                   alt={announcement.title}
                   width={200}
                   height={150}

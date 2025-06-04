@@ -18,9 +18,7 @@ import { useLanguage } from "@/components/language-context"
 export function AddUsersContent() {
   const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [date, setDate] = useState<Date>()
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,71 +28,71 @@ export function AddUsersContent() {
     setTimeout(() => {
       setIsLoading(false)
       // Rediriger vers la page des utilisateurs
-      window.location.href = "/users"
+      window.location.href = "/admin/users"
     }, 1000)
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Add a new account</h1>
+      <h1 className="text-2xl font-bold">{t("admin.addNewAccount")}</h1>
 
       <div className="mb-6">
-          <Link href="/admin/users" className="text-green-50 hover:underline flex items-center">
-            <ChevronDown className="h-4 w-4 mr-1 rotate-90" />
-            {t("common.back")}
-          </Link>
-        </div>
+        <Link href="/admin/users" className="text-green-50 hover:underline flex items-center">
+          <ChevronDown className="h-4 w-4 mr-1 rotate-90" />
+          {t("common.back")}
+        </Link>
+      </div>
 
       <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-center mb-8">Create an Account</h2>
+        <h2 className="text-xl font-semibold text-center mb-8">{t("admin.createAccount")}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <Label htmlFor="name" className="mb-2 block">
-                Name
+                {t("admin.userName")}
               </Label>
-              <Input id="name" placeholder="Enter name" required />
+              <Input id="name" placeholder={t("admin.enterUserName")} required />
             </div>
 
             <div>
               <Label htmlFor="email" className="mb-2 block">
-                Email address:
+                {t("admin.userEmail")}
               </Label>
-              <Input id="email" type="email" placeholder="Enter email" required />
+              <Input id="email" type="email" placeholder={t("admin.enterUserEmail")} required />
             </div>
 
             <div>
               <Label htmlFor="address" className="mb-2 block">
-                Address
+                {t("admin.address")}
               </Label>
-              <Input id="address" placeholder="Enter address" required />
+              <Input id="address" placeholder={t("admin.enterAddress")} required />
             </div>
 
             <div>
               <Label htmlFor="firstname" className="mb-2 block">
-                Firstname
+                {t("admin.userFirstName")}
               </Label>
-              <Input id="firstname" placeholder="Enter first name" required />
+              <Input id="firstname" placeholder={t("admin.enterFirstName")} required />
             </div>
 
             <div>
               <Label htmlFor="phone" className="mb-2 block">
-                Phone number
+                {t("admin.userPhone")}
               </Label>
-              <Input id="phone" placeholder="Enter phone number" required />
+              <Input id="phone" placeholder={t("admin.enterPhone")} />
             </div>
 
             <div>
               <Label htmlFor="city" className="mb-2 block">
-                City
+                {t("admin.city")}
               </Label>
-              <Input id="city" placeholder="Enter city" required />
+              <Input id="city" placeholder={t("admin.enterCity")} />
             </div>
 
             <div>
               <Label htmlFor="dob" className="mb-2 block">
-                Date of birth
+                {t("admin.userDateOfBirth")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -103,7 +101,7 @@ export function AddUsersContent() {
                     className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : "Enter date of birth"}
+                    {date ? format(date, "PPP") : t("admin.enterDateOfBirth")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -114,56 +112,57 @@ export function AddUsersContent() {
 
             <div>
               <Label htmlFor="password" className="mb-2 block">
-                Password
+                {t("admin.password")}
               </Label>
               <Input id="password" type="password" placeholder="••••••" required />
             </div>
 
             <div>
               <Label htmlFor="postal" className="mb-2 block">
-                Postal code
+                {t("admin.postalCode")}
               </Label>
-              <Input id="postal" placeholder="Enter postal code" required />
+              <Input id="postal" placeholder={t("admin.enterPostalCode")} />
             </div>
 
             <div>
               <Label htmlFor="account-type" className="mb-2 block">
-              Type of account
+                {t("admin.accountType")}
               </Label>
               <Select>
-              <SelectTrigger id="account-type" className="w-full">
-                <SelectValue placeholder="Select account type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="livreur">Livreur</SelectItem>
-                <SelectItem value="commercant">Commerçant</SelectItem>
-                <SelectItem value="prestataire">Prestataire de service</SelectItem>
-              </SelectContent>
+                <SelectTrigger id="account-type" className="w-full">
+                  <SelectValue placeholder={t("admin.selectAccountType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="client">{t("admin.client")}</SelectItem>
+                  <SelectItem value="livreur">{t("admin.deliveryMan")}</SelectItem>
+                  <SelectItem value="commercant">{t("admin.shopkeepers")}</SelectItem>
+                  <SelectItem value="prestataire">{t("admin.serviceProviders")}</SelectItem>
+                  <SelectItem value="administrateur">{t("admin.administrator")}</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="confirm-password" className="mb-2 block">
-                Confirm password
+                {t("admin.confirmPassword")}
               </Label>
               <Input id="confirm-password" type="password" placeholder="••••••" required />
             </div>
 
             <div>
               <Label htmlFor="country" className="mb-2 block">
-                Country
+                {t("admin.country")}
               </Label>
               <Select>
                 <SelectTrigger id="country" className="w-full">
-                  <SelectValue placeholder="Enter country" />
+                  <SelectValue placeholder={t("admin.selectCountry")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="uk">United Kingdom</SelectItem>
-                  <SelectItem value="us">United States</SelectItem>
-                  <SelectItem value="fr">France</SelectItem>
-                  <SelectItem value="de">Germany</SelectItem>
-                  <SelectItem value="es">Spain</SelectItem>
+                  <SelectItem value="uk">{t("admin.unitedKingdom")}</SelectItem>
+                  <SelectItem value="us">{t("admin.unitedStates")}</SelectItem>
+                  <SelectItem value="fr">{t("admin.france")}</SelectItem>
+                  <SelectItem value="de">{t("admin.germany")}</SelectItem>
+                  <SelectItem value="es">{t("admin.spain")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -171,7 +170,7 @@ export function AddUsersContent() {
 
           <div className="flex justify-center mt-8">
             <Button type="submit" disabled={isLoading} className="bg-[#8CD790] hover:bg-[#7ac57e] text-white px-8">
-              Create
+              {t("common.create")}
             </Button>
           </div>
         </form>
