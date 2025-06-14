@@ -72,16 +72,6 @@ export default function DeliverymanDocumentsPage() {
 				}
 			).catch(error => console.error('Error:', error));
 
-			await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/livreur/add`,
-				{
-					method: 'POST',
-					body: JSON.stringify({
-						utilisateur_id: userData.id,
-					}),
-				}
-			).catch(error => console.error('Error:', error));
-
 			router.push(
 				'/documents-verification/pending-validation/deliveryman'
 			);

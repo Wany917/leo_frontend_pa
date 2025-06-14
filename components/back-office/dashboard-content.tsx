@@ -14,11 +14,11 @@ export function DashboardContent() {
   const router = useRouter()
   const [users, setUsers] = useState([
     {
-      first_name: "",
-      last_name: "",
-      address: "",
-      role: "",
-      created_at: "",
+        id: "",
+        firstName: "",
+        lastName: "",
+        address: "",
+        createdAt: "",
     }
   ])
 
@@ -105,26 +105,29 @@ export function DashboardContent() {
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t("admin.address")}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {/* <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t("admin.accountType")}
-                      </th>
+                      </th> */}
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t("admin.dateCreated")}
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {users.map((item) => (
-                        <tr key={`${item.last_name}-${item.first_name}`} className="hover:bg-gray-50">
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.first_name}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.last_name}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address != null ? item.address : "No Address"}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.role}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                          {new Date(item.created_at).toLocaleDateString('fr-FR')}
-                        </td>
-                        </tr>
-                    ))}
+                    {users.map((item, index) => {
+                        const uniqueKey = item.id || `${item.lastName || 'unknown'}-${item.firstName || 'unknown'}-${index}`;
+                        return (
+                            <tr key={uniqueKey} className="hover:bg-gray-50">
+                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.firstName}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.lastName}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address != null ? item.address : "No Address"}</td>
+                                {/* <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.role}</td> */}
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                                </td>
+                            </tr>
+                        );
+                    })}
                   </tbody>
                 </table>
               </div>

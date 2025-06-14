@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { UserTable } from "@/components/back-office/user-table"
-import { Plus } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +24,8 @@ export function UsersContent() {
   const { t } = useLanguage()
   const [selectedUser, setSelectedUser] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFilter, setSelectedFilter] = useState("all")
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -30,26 +34,39 @@ export function UsersContent() {
   }>({ isOpen: false, title: "", description: "", onConfirm: () => {} })
   const modalRef = useRef<HTMLDivElement>(null)
 
-  // Données fictives pour les différentes catégories d'utilisateurs
-const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
-useEffect(() => {
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/all`);
-      const data = await response.json();
-      setAllUsers(data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/all`);
+        const data = await response.json();
+        setAllUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+
+  // Search function
+  const filterUsers = (users: any[], searchTerm: string) => {
+    if (!searchTerm) return users;
+    
+    return users.filter(user => 
+      user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phoneNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
-  
-  fetchUsers();
-}, []);
 
-const deliveryManData = allUsers
-  .filter(user => user.livreur)
-  .map(user => ({
+  // Modified to allow users with multiple roles to appear in multiple sections
+  const deliveryManData = filterUsers(
+    allUsers.filter(user => user.livreur),
+    searchTerm
+  ).map(user => ({
     id: user.id,
     name: user.lastName,
     firstName: user.firstName,
@@ -57,12 +74,13 @@ const deliveryManData = allUsers
     phone: user.phoneNumber,
     status: user.state === 'open' ? t("admin.active") : t('admin.inactive'),
     statusColor: user.state === 'open' ? "bg-[#8CD790] text-white" : "bg-[#E57373] text-white",
-    justificatives: user.justificationPieces, // Placeholder until actual documents are implemented
+    justificatives: user.justificationPieces,
   }));
 
-const serviceProvidersData = allUsers
-  .filter(user => user.prestataire)
-  .map(user => ({
+  const serviceProvidersData = filterUsers(
+    allUsers.filter(user => user.prestataire),
+    searchTerm
+  ).map(user => ({
     id: user.id,
     name: user.lastName,
     firstName: user.firstName,
@@ -70,12 +88,13 @@ const serviceProvidersData = allUsers
     phone: user.phoneNumber,
     status: user.state === 'open' ? t("admin.accepted") : t("admin.rejected"),
     statusColor: user.state === 'open' ? "bg-[#8CD790] text-white" : "bg-[#E57373] text-white",
-    justificatives: user.justificationPieces, // Placeholder until actual documents are implemented
+    justificatives: user.justificationPieces,
   }));
 
-const usersData = allUsers
-  .filter(user => !user.admin && !user.livreur && !user.prestataire)
-  .map(user => ({
+  const usersData = filterUsers(
+    allUsers.filter(user => !user.admin && !user.livreur && !user.prestataire && !user.commercant),
+    searchTerm
+  ).map(user => ({
     id: user.id,
     name: user.lastName,
     firstName: user.firstName,
@@ -85,9 +104,10 @@ const usersData = allUsers
     statusColor: user.state === 'open' ? "bg-[#8CD790] text-white" : "bg-[#E57373] text-white",
   }));
 
-const administratorsData = allUsers
-  .filter(user => user.admin)
-  .map(user => ({
+  const administratorsData = filterUsers(
+    allUsers.filter(user => user.admin),
+    searchTerm
+  ).map(user => ({
     id: user.id,
     name: user.lastName,
     firstName: user.firstName,
@@ -97,18 +117,19 @@ const administratorsData = allUsers
     statusColor: user.state === 'open' ? "bg-[#8CD790] text-white" : "bg-[#E57373] text-white",
   }));
 
-  const shopkeepersData = [
-    {
-      id: 3,
-      name: "BIDAUX",
-      firstName: "Killian",
-      email: "kbidaux@myges.fr",
-      phone: "0636760421",
-      status: t("admin.rejected"),
-      statusColor: "bg-[#E57373] text-white",
-      justificatives: ["SIRET.pdf", "SIREN.pdf"],
-    },
-  ]
+  const shopkeepersData = filterUsers(
+    allUsers.filter(user => user.commercant),
+    searchTerm
+  ).map(user => ({
+    id: user.id,
+    name: user.lastName,
+    firstName: user.firstName,
+    email: user.email,
+    phone: user.phoneNumber,
+    status: user.state === 'open' ? t("admin.active") : t("admin.inactive"),
+    statusColor: user.state === 'open' ? "bg-[#8CD790] text-white" : "bg-[#E57373] text-white",
+    justificatives: user.justificationPieces,
+  }));
 
   const handleToggleStatus = async (userId: number, currentStatus: string) => {
     const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
@@ -192,6 +213,21 @@ const administratorsData = allUsers
     }
   }, [isModalOpen])
 
+  // Component to render empty state
+  const EmptyUserSection = ({ userType }: { userType: string }) => (
+    <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+      <div className="text-gray-500">
+        <p className="text-lg font-medium">{t("admin.noUsersFound")}</p>
+        <p className="text-sm mt-1">{t("admin.noUsersOfType")} {userType.toLowerCase()}</p>
+      </div>
+    </div>
+  );
+
+  // Filter sections based on selected filter
+  const shouldShowSection = (sectionType: string) => {
+    return selectedFilter === "all" || selectedFilter === sectionType;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -205,57 +241,127 @@ const administratorsData = allUsers
         </Link>
       </div>
 
+      {/* Search and Filter Section */}
+      <div className="bg-white rounded-lg p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search Bar */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder={t("admin.searchUsers") || "Search by name, email, or phone..."}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {/* Filter Dropdown */}
+          <div className="w-full sm:w-64">
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("admin.filterByUserType") || "Filter by user type"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("admin.allUsers") || "All Users"}</SelectItem>
+                <SelectItem value="deliveryMan">{t("admin.deliveryMan")}</SelectItem>
+                <SelectItem value="serviceProviders">{t("admin.serviceProviders")}</SelectItem>
+                <SelectItem value="shopkeepers">{t("admin.shopkeepers")}</SelectItem>
+                <SelectItem value="clients">{t("admin.clients")}</SelectItem>
+                <SelectItem value="administrators">{t("admin.administrators")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        {/* Search Results Summary */}
+        {searchTerm && (
+          <div className="text-sm text-gray-600">
+            {t("admin.searchResults") || "Search results for:"} <span className="font-medium">"{searchTerm}"</span>
+          </div>
+        )}
+      </div>
+
       {/* Users Table */}
       <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t("admin.deliveryMan")}</h2>
-          <UserTable
-            data={deliveryManData}
-            showJustificative={true}
-            onStatusClick={handleStatusClick}
-            onToggleStatus={handleToggleStatus}
-          />
-        </div>
+        {shouldShowSection("deliveryMan") && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{t("admin.deliveryMan")}</h2>
+            {deliveryManData.length > 0 ? (
+              <UserTable
+                data={deliveryManData}
+                showJustificative={true}
+                onStatusClick={handleStatusClick}
+                onToggleStatus={handleToggleStatus}
+              />
+            ) : (
+              <EmptyUserSection userType={t("admin.deliveryMan")} />
+            )}
+          </div>
+        )}
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t("admin.serviceProviders")}</h2>
-          <UserTable
-            data={serviceProvidersData}
-            showJustificative={true}
-            onStatusClick={handleStatusClick}
-            onToggleStatus={handleToggleStatus}
-          />
-        </div>
+        {shouldShowSection("serviceProviders") && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{t("admin.serviceProviders")}</h2>
+            {serviceProvidersData.length > 0 ? (
+              <UserTable
+                data={serviceProvidersData}
+                showJustificative={true}
+                onStatusClick={handleStatusClick}
+                onToggleStatus={handleToggleStatus}
+              />
+            ) : (
+              <EmptyUserSection userType={t("admin.serviceProviders")} />
+            )}
+          </div>
+        )}
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t("admin.shopkeepers")}</h2>
-          <UserTable
-            data={shopkeepersData}
-            showJustificative={false}
-            onStatusClick={handleStatusClick}
-            onToggleStatus={handleToggleStatus}
-          />
-        </div>
+        {shouldShowSection("shopkeepers") && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{t("admin.shopkeepers")}</h2>
+            {shopkeepersData.length > 0 ? (
+              <UserTable
+                data={shopkeepersData}
+                showJustificative={true}
+                onStatusClick={handleStatusClick}
+                onToggleStatus={handleToggleStatus}
+              />
+            ) : (
+              <EmptyUserSection userType={t("admin.shopkeepers")} />
+            )}
+          </div>
+        )}
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t("admin.clients")}</h2>
-          <UserTable
-            data={usersData.map(user => ({ ...user, justificatives: [] }))}
-            showJustificative={false}
-            onStatusClick={() => {}}
-            onToggleStatus={handleToggleStatus}
-          />
-        </div>
+        {shouldShowSection("clients") && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{t("admin.clients")}</h2>
+            {usersData.length > 0 ? (
+              <UserTable
+                data={usersData.map(user => ({ ...user, justificatives: [] }))}
+                showJustificative={false}
+                onStatusClick={() => {}}
+                onToggleStatus={handleToggleStatus}
+              />
+            ) : (
+              <EmptyUserSection userType={t("admin.clients")} />
+            )}
+          </div>
+        )}
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t("admin.administrators")}</h2>
-          <UserTable
-            data={administratorsData.map(admin => ({ ...admin, justificatives: [] }))}
-            showJustificative={true}
-            onStatusClick={() => {}}
-            onToggleStatus={handleToggleStatus}
-          />
-        </div>
+        {shouldShowSection("administrators") && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">{t("admin.administrators")}</h2>
+            {administratorsData.length > 0 ? (
+              <UserTable
+                data={administratorsData.map(admin => ({ ...admin, justificatives: [] }))}
+                showJustificative={false}
+                onStatusClick={() => {}}
+                onToggleStatus={handleToggleStatus}
+              />
+            ) : (
+              <EmptyUserSection userType={t("admin.administrators")} />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Confirmation Dialog */}

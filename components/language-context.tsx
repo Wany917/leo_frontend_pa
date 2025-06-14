@@ -37,13 +37,21 @@ export function useLanguage() {
 const STORAGE_KEY = "ecodeli-language";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window === "undefined") return "EN";
-    return localStorage.getItem(STORAGE_KEY) || "EN";
-  });
+  // Always start with "EN" on both server and client
+  const [language, setLanguageState] = useState<Language>("EN");
+  const [isHydrated, setIsHydrated] = useState(false);
   const [translations, setTranslations] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [availableLocales, setAvailableLocales] = useState<Language[]>([]);
+
+  // After hydration, load the actual language from localStorage
+  useEffect(() => {
+    setIsHydrated(true);
+    const savedLanguage = localStorage.getItem(STORAGE_KEY);
+    if (savedLanguage && savedLanguage !== language) {
+      setLanguageState(savedLanguage);
+    }
+  }, []);
 
   const refreshLocales = async () => {
     try {

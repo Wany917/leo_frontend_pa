@@ -118,26 +118,30 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 					const justificationPieceData = await response.json();
 
 					if (
-						justificationPieceData.justificationPieces &&
-						justificationPieceData.justificationPieces.length > 0
+						justificationPieceData.data &&
+						justificationPieceData.data.length > 0
 					) {
-						const hasVerified =
-							justificationPieceData.justificationPieces.some(
-								(piece: any) =>
-									piece.verificationStatus === 'verified'
+						// Filter for deliveryman account type only
+						const deliverymanPieces = justificationPieceData.data.filter(
+							(piece: any) => piece.accountType === 'livreur'
+						);
+
+						if (deliverymanPieces.length > 0) {
+							const hasVerified = deliverymanPieces.some(
+								(piece: any) => piece.verificationStatus === 'verified'
 							);
 
-						const hasPending =
-							justificationPieceData.justificationPieces.some(
-								(piece: any) =>
-									piece.verificationStatus === 'pending'
+							const hasPending = deliverymanPieces.some(
+								(piece: any) => piece.verificationStatus === 'pending'
 							);
 
-						if (hasVerified) {
-							path = '/app_deliveryman';
-						} else if (hasPending) {
-							path =
-								'/documents-verification/pending-validation/deliveryman';
+							if (hasVerified) {
+								path = '/app_deliveryman';
+							} else if (hasPending) {
+								path = '/documents-verification/pending-validation/deliveryman';
+							} else {
+								path = '/register/delivery-man';
+							}
 						} else {
 							path = '/register/delivery-man';
 						}
@@ -145,10 +149,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						path = '/register/delivery-man';
 					}
 				} catch (error) {
-					console.error(
-						'Error fetching justification pieces:',
-						error
-					);
+					console.error('Error fetching justification pieces:', error);
 					path = '/register/delivery-man';
 				}
 				break;
@@ -222,26 +223,30 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 					const justificationPieceData = await response.json();
 
 					if (
-						justificationPieceData.justificationPieces &&
-						justificationPieceData.justificationPieces.length > 0
+						justificationPieceData.data &&
+						justificationPieceData.data.length > 0
 					) {
-						const hasVerified =
-							justificationPieceData.justificationPieces.some(
-								(piece: any) =>
-									piece.verificationStatus === 'verified'
+						// Filter for service provider account type only
+						const serviceProviderPieces = justificationPieceData.data.filter(
+							(piece: any) => piece.accountType === 'prestataire'
+						);
+
+						if (serviceProviderPieces.length > 0) {
+							const hasVerified = serviceProviderPieces.some(
+								(piece: any) => piece.verificationStatus === 'verified'
 							);
 
-						const hasPending =
-							justificationPieceData.justificationPieces.some(
-								(piece: any) =>
-									piece.verificationStatus === 'pending'
+							const hasPending = serviceProviderPieces.some(
+								(piece: any) => piece.verificationStatus === 'pending'
 							);
 
-						if (hasVerified) {
-							path = '/app_service-provider';
-						} else if (hasPending) {
-							path =
-								'/documents-verification/pending-validation/service-provider';
+							if (hasVerified) {
+								path = '/app_service-provider';
+							} else if (hasPending) {
+								path = '/documents-verification/pending-validation/service-provider';
+							} else {
+								path = '/register/service-provider';
+							}
 						} else {
 							path = '/register/service-provider';
 						}
@@ -249,10 +254,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						path = '/register/service-provider';
 					}
 				} catch (error) {
-					console.error(
-						'Error fetching justification pieces:',
-						error
-					);
+					console.error('Error fetching justification pieces:', error);
 					path = '/register/service-provider';
 				}
 				break;

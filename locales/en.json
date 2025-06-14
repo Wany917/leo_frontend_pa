@@ -818,7 +818,20 @@
     "drivingLicense": "Driving License",
     "serviceProvider": "Service Provider",
     "validate": "Validate",
-    "pending": "Pending"
+    "pending": "Pending",
+    "error": "Error",
+    "errorFetchingData": "Error fetching data",
+    "success": "Success",
+    "errorDownloadingDocument": "Error downloading document",
+    "loading": "Loading...",
+    "desiredAccountType": "Desired Account Type",
+    "confirm": "Confirm",
+    "noUsersFound": "No users found",
+    "noUsersOfType": "No users of type",
+    "searchUsers": "Search users...",
+    "filterByUserType": "Filter by user type",
+    "allUsers": "All Users",
+    "searchResults": "Search results for:"
   },
   "validations": {
     "roles": {
@@ -828,6 +841,11 @@
       "prestataire": "Service Provider",
       "commercant": "Shopkeeper",
       "unknown": "Unknown Role"
+    },
+    "accountTypes": {
+      "deliveryman": "Delivery Person",
+      "serviceProvider": "Service Provider",
+      "merchant": "Merchant"
     }
   }
 }

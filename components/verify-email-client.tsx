@@ -111,7 +111,6 @@ export default function VerifyEmailClient() {
     }
 
     try {
-      // Create the base user account
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
         {
@@ -120,19 +119,19 @@ export default function VerifyEmailClient() {
           body: JSON.stringify({
             first_name: formData.firstname,
             last_name: formData.name,
-            email: formData.email,
             address: formData.address,
             city: formData.city,
             postalCode: formData.postalCode,
             country: formData.country,
-            password: formData.password,
-            confirm_password: formData.confirmPassword,
             phone_number: formData.phone,
+            email: formData.email,
+            password: formData.password,
+            confirm_password: formData.confirmPassword
           }),
           credentials: "include",
         }
       )
-    
+
       const data = await res.json()
 
       if (!res.ok) {

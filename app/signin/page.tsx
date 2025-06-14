@@ -205,14 +205,16 @@ export default function SignupPage() {
                   <input
                     id="dateOfBirth"
                     name="dateOfBirth"
-                    type="text"
+                    type="date"
                     value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    placeholder={t("auth.enterDateOfBirth")}
+                    onChange={(e) => {
+                      const { name, value } = e.target;
+                      setFormData((prev) => ({ ...prev, [name]: value }));
+                    }}
+                    placeholder="DD/MM/YYYY"
                     className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
                     required
-                    onFocus={(e) => (e.target.type = "date")}
-                    onBlur={(e) => (e.target.type = "text")}
+                    max={new Date().toISOString().split('T')[0]} // Prevents future dates
                   />
                 </div>
               </div>

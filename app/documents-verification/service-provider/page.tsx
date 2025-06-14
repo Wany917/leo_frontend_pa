@@ -71,7 +71,10 @@ export default function ServiceProviderDocumentsPage() {
 			formDataToSend.append('account_type', 'prestataire');
 			const fileToUpload = formData.idCard || formData.drivingLicence;
 			if (fileToUpload) {
-				formDataToSend.append('file', fileToUpload);
+				// Send the filename as a string instead of the file object
+				formDataToSend.append('file_path', file_name); // Use the generated filename
+				// You'll also need to handle the actual file upload separately
+				formDataToSend.append('file', fileToUpload); // Add the actual file
 			}
 
 			await fetch(
@@ -81,16 +84,6 @@ export default function ServiceProviderDocumentsPage() {
 					body: formDataToSend,
 				}
 			).catch((error) => console.error('Error:', error));
-
-			await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}prestataires/add`,
-				{
-					method: 'POST',
-					body: JSON.stringify({
-						utilisateur_id: userData.id,
-					}),
-				}
-			).catch(error => console.error('Error:', error));
 
 			router.push(
 				'/documents-verification/pending-validation/service-provider'
@@ -178,8 +171,8 @@ export default function ServiceProviderDocumentsPage() {
 									{formData.drivingLicence
 										? formData.drivingLicence.name
 										: t(
-												'service-provider.uploadDrivingLicence'
-										  )}
+											'service-provider.uploadDrivingLicence'
+										)}
 								</span>
 							</label>
 							<input

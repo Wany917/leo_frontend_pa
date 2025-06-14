@@ -833,7 +833,19 @@
     "drivingLicense": "Permis de conduire",
     "serviceProvider": "Prestataire de service",
     "validate": "Valider",
-    "pending": "En attente"
+    "pending": "En attente",
+    "error": "Erreur",
+    "errorFetchingData": "Erreur lors de la récupération des données",
+    "success": "Succès",
+    "errorDownloadingDocument": "Erreur lors du téléchargement du document",
+    "loading": "Chargement...",
+    "desiredAccountType": "Type de compte souhaité",
+    "noUsersFound": "Aucun utilisateur trouvé",
+    "noUsersOfType": "Aucun utilisateur de type",
+    "searchUsers": "Rechercher des utilisateurs...",
+    "filterByUserType": "Filtrer par type d'utilisateur",
+    "allUsers": "Tous les utilisateurs",
+    "searchResults": "Résultats de recherche pour :"
   },
   "validations": {
     "roles": {
@@ -843,6 +855,11 @@
       "prestataire": "Prestataire de service",
       "commercant": "Commerçant",
       "unknown": "Rôle inconnu"
+    },
+    "accountTypes": {
+      "deliveryman": "Livreur",
+      "serviceProvider": "Prestataire de service",
+      "merchant": "Commerçant"
     }
   }
 }
