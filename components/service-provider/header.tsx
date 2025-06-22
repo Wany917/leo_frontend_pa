@@ -18,6 +18,7 @@ export default function ServiceProviderHeader({
 	const { t } = useLanguage();
 	const [first_name, setUserName] = useState('');
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const [isAdmin, setIsAdmin] = useState(false);
 	const router = useRouter();
 	const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +35,12 @@ export default function ServiceProviderHeader({
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		let user_id = '';
 
@@ -62,19 +68,24 @@ export default function ServiceProviderHeader({
 
 		switch (buttonName) {
 			case 'edit-account':
-				path = '/app_service-provider/edit-account';
+				router.push('/app_service-provider/edit_account');
 				break;
 			case 'client-space':
-				path = '/app_client';
+				router.push('/app_client');
+				break;
+			case 'admin':
+				if (isAdmin) {
+					router.push('/admin');
+				}
 				break;
 			case 'shopkeeper':
-				path = '/register/shopkeeper';
+				router.push('/register/shopkeeper');
 				break;
 			case 'deliveryman':
 				try {
 					if (!user_id) {
 						console.error('User ID not available');
-						path = '/register/deliveryman';
+						router.push('/register/delivery-man');
 						break;
 					}
 
@@ -115,36 +126,37 @@ export default function ServiceProviderHeader({
 							);
 
 						if (hasVerified) {
-							path = '/app_deliveryman';
+							router.push('/app_deliveryman');
 						} else if (hasPending) {
-							path =
-								'/documents-verification/pending-validation/deliveryman';
+							router.push(
+								'/documents-verification/pending-validation/deliveryman'
+							);
 						} else {
-							path = '/register/deliveryman';
+							router.push('/register/delivery-man');
 						}
 					} else {
-						path = '/register/deliveryman';
+						router.push('/register/delivery-man');
 					}
 				} catch (error) {
 					console.error(
 						'Error fetching justification pieces:',
 						error
 					);
-					path = '/register/deliveryman';
+					router.push('/register/delivery-man');
 				}
 				break;
 			case 'logout':
-				path = '/logout';
+				sessionStorage.removeItem('authToken');
+				localStorage.removeItem('authToken');
+				router.push('/login');
 				break;
 			default:
-				path = '/app_service-provider';
+				router.push('/app_service-provider');
 		}
 
 		if (closeMenu) {
 			setIsUserMenuOpen(false);
 		}
-
-		router.push(path);
 	};
 
 	useEffect(() => {
@@ -167,7 +179,12 @@ export default function ServiceProviderHeader({
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
 			method: 'GET',
@@ -183,6 +200,7 @@ export default function ServiceProviderHeader({
 			})
 			.then((data) => {
 				setUserName(data.firstName);
+				setIsAdmin(data.admin);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
 	}, []);
@@ -205,7 +223,7 @@ export default function ServiceProviderHeader({
 				<div className='relative' ref={userMenuRef}>
 					<button
 						onClick={toggleUserMenu}
-						className='flex items-center bg-green-50 text-white rounded-full px-4 py-1 hover:bg-green-400 transition-colors'
+						className='flex items-center bg-green-500 text-white rounded-full px-4 py-1 hover:bg-green-600 transition-colors'
 					>
 						<User className='h-5 w-5 mr-2' />
 						<span className='hidden sm:inline'>{first_name}</span>
@@ -231,6 +249,16 @@ export default function ServiceProviderHeader({
 								<User className='h-4 w-4 mr-2' />
 								<span>{t('common.clientSpace')}</span>
 							</button>
+
+							{isAdmin && (
+								<button
+									className='flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
+									onClick={() => navigateTo('admin', true)}
+								>
+									<User className='h-4 w-4 mr-2' />
+									<span>{t('common.adminDashboard')}</span>
+								</button>
+							)}
 
 							<div className='border-t border-gray-100 my-1'></div>
 

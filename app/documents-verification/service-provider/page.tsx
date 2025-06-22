@@ -35,7 +35,12 @@ export default function ServiceProviderDocumentsPage() {
 			const token =
 				sessionStorage.getItem('authToken') ||
 				localStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			const user = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
@@ -66,7 +71,7 @@ export default function ServiceProviderDocumentsPage() {
 			formDataToSend.append('utilisateur_id', userData.id);
 			formDataToSend.append(
 				'document_type',
-				formData.idCard ? 'idCard' : 'drivingLicence'
+				formData.idCard ? 'Id Card' : 'Drivin Licence'
 			);
 			formDataToSend.append('account_type', 'prestataire');
 			const fileToUpload = formData.idCard || formData.drivingLicence;
@@ -171,8 +176,8 @@ export default function ServiceProviderDocumentsPage() {
 									{formData.drivingLicence
 										? formData.drivingLicence.name
 										: t(
-											'service-provider.uploadDrivingLicence'
-										)}
+												'service-provider.uploadDrivingLicence'
+										  )}
 								</span>
 							</label>
 							<input

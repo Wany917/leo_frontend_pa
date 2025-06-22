@@ -129,11 +129,14 @@ export interface Service {
 	duration_minutes?: number;
 	category?: string;
 	user_id: number;
+	clientId: number;
+	service_type_id?: number | null;
 	status: 'active' | 'inactive' | 'pending_validation';
 	created_at: string;
 	updated_at: string;
 	// Relations
 	user?: Prestataire;
+	client?: Client;
 }
 
 // Types de messages
@@ -218,19 +221,22 @@ export interface JustificationPiece {
 // Types de réclamations
 export interface Complaint {
 	id: number;
-	user_id: number;
-	title: string;
+	utilisateurId: number;
+	subject: string;
 	description: string;
-	category: string;
-	status: 'pending' | 'in_review' | 'resolved' | 'closed';
+	status: 'open' | 'in_progress' | 'resolved' | 'closed';
 	priority: 'low' | 'medium' | 'high' | 'urgent';
-	assigned_to?: number;
-	resolution?: string;
-	created_at: string;
-	updated_at: string;
+	relatedOrderId?: string;
+	imagePath?: string;
+	adminNotes?: string;
+	createdAt: string;
+	updatedAt: string;
 	// Relations
-	user?: User;
-	assigned_user?: User;
+	utilisateur?: {
+		id: number;
+		nom?: string;
+		email: string;
+	};
 }
 
 // Types de réponses API
@@ -295,6 +301,7 @@ export interface CreateServiceRequest {
 	price_per_kg?: number;
 	duration_minutes?: number;
 	category?: string;
+	clientId: number;
 }
 
 export interface SendMessageRequest {
@@ -307,10 +314,11 @@ export interface UpdateAvailabilityRequest {
 }
 
 export interface CreateComplaintRequest {
-	title: string;
+	utilisateur_id: number;
+	subject: string;
 	description: string;
-	category: string;
-	priority: 'low' | 'medium' | 'high' | 'urgent';
+	priority?: 'low' | 'medium' | 'high' | 'urgent';
+	related_order_id?: string;
 }
 
 // Types pour les événements WebSocket

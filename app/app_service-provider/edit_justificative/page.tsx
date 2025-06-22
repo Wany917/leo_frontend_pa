@@ -1,5 +1,10 @@
 import ServiceProviderEditJustificative from "@/components/service-provider/edit-justificative"
+import ServiceProviderLayout from "@/components/service-provider/layout"
 
 export default function ServiceProviderEditJustificativePage() {
-  return <ServiceProviderEditJustificative />
+  return (
+    <ServiceProviderLayout>
+      <ServiceProviderEditJustificative />
+    </ServiceProviderLayout>
+  )
 }

@@ -53,7 +53,7 @@ export function useApiCall<T = any>(): UseApiCallResult<T> {
 		data,
 		loading,
 		error,
-		execute,
+execute: (apiCall: () => Promise<any>) => execute(apiCall()),
 		reset,
 	};
 }
@@ -119,7 +119,7 @@ export function useApiCallWithSuccess<T = any>(successMessage?: string): UseApiC
 		data,
 		loading,
 		error,
-		execute,
+execute: (apiCall: () => Promise<any>) => execute(apiCall()),
 		reset,
 	};
 }
@@ -161,7 +161,7 @@ export function useApiCallSilent<T = any>(): Omit<UseApiCallResult<T>, 'loading'
 	return {
 		data,
 		error,
-		execute,
+execute: (apiCall: () => Promise<any>) => execute(apiCall()),
 		reset,
 	};
 } 

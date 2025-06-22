@@ -93,7 +93,7 @@ export default function ServiceProviderSidebar({
 									href={item.href}
 									className={`flex items-center rounded-md px-4 py-3 ${
 										isActive(item.href)
-											? 'bg-green-50 text-white'
+											? 'bg-green-500 text-white'
 											: 'text-gray-700 hover:bg-gray-100'
 									}`}
 								>

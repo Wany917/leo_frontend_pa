@@ -30,8 +30,8 @@ export default function DeliverymanDocumentsPage() {
 		setError('');
 
 		if (!formData.idCard && !formData.drivingLicence) {
-			setError(t('deliveryman.pleaseUploadDocuments'))
-			return
+			setError(t('deliveryman.pleaseUploadDocuments'));
+			return;
 		}
 
 		setIsSubmitting(true);
@@ -40,7 +40,12 @@ export default function DeliverymanDocumentsPage() {
 			const token =
 				sessionStorage.getItem('authToken') ||
 				localStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			const user = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
@@ -57,7 +62,10 @@ export default function DeliverymanDocumentsPage() {
 
 			const formDataToSend = new FormData();
 			formDataToSend.append('utilisateur_id', userData.id);
-			formDataToSend.append('document_type', formData.idCard ? 'idCard' : 'drivingLicence');
+			formDataToSend.append(
+				'document_type',
+				formData.idCard ? 'Id Card' : 'Driving Licence'
+			);
 			formDataToSend.append('account_type', 'livreur');
 			const fileToUpload = formData.idCard || formData.drivingLicence;
 			if (fileToUpload) {
@@ -68,9 +76,9 @@ export default function DeliverymanDocumentsPage() {
 				`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/create`,
 				{
 					method: 'POST',
-					body: formDataToSend
+					body: formDataToSend,
 				}
-			).catch(error => console.error('Error:', error));
+			).catch((error) => console.error('Error:', error));
 
 			router.push(
 				'/documents-verification/pending-validation/deliveryman'

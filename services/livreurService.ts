@@ -226,7 +226,7 @@ class LivreurService {
 		// Créer l'entrée justification_piece
 		return apiClient.post(API_ROUTES.LIVREURS.UPLOAD_JUSTIFICATION, {
 			utilisateur_id: userId,
-			document_type: documentType,
+			document_type: documentType == "idCard" ? "Id Card" : "Driving Licence",
 			file_path: uploadResponse.data.path
 		});
 	}

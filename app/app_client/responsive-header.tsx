@@ -4,13 +4,26 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Menu, X, LogOut, Edit, ChevronDown, Package } from 'lucide-react';
+import {
+	User,
+	Menu,
+	X,
+	LogOut,
+	Edit,
+	ChevronDown,
+	Package,
+} from 'lucide-react';
 import LanguageSelector from '@/components/language-selector';
 import { useScreenSize, MobileOnly, TabletUp } from '../utils/responsive-utils';
 import { useLanguage } from '@/components/language-context';
 
 interface HeaderProps {
-	activePage?: 'announcements' | 'payments' | 'messages' | 'complaint' | 'tracking';
+	activePage?:
+		| 'announcements'
+		| 'payments'
+		| 'messages'
+		| 'complaint'
+		| 'tracking';
 }
 
 export default function ResponsiveHeader({ activePage }: HeaderProps) {
@@ -41,7 +54,12 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		let user_id = '';
 
@@ -122,23 +140,27 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						justificationPieceData.data.length > 0
 					) {
 						// Filter for deliveryman account type only
-						const deliverymanPieces = justificationPieceData.data.filter(
-							(piece: any) => piece.accountType === 'livreur'
-						);
+						const deliverymanPieces =
+							justificationPieceData.data.filter(
+								(piece: any) => piece.accountType === 'livreur'
+							);
 
 						if (deliverymanPieces.length > 0) {
 							const hasVerified = deliverymanPieces.some(
-								(piece: any) => piece.verificationStatus === 'verified'
+								(piece: any) =>
+									piece.verificationStatus === 'verified'
 							);
 
 							const hasPending = deliverymanPieces.some(
-								(piece: any) => piece.verificationStatus === 'pending'
+								(piece: any) =>
+									piece.verificationStatus === 'pending'
 							);
 
 							if (hasVerified) {
 								path = '/app_deliveryman';
 							} else if (hasPending) {
-								path = '/documents-verification/pending-validation/deliveryman';
+								path =
+									'/documents-verification/pending-validation/deliveryman';
 							} else {
 								path = '/register/delivery-man';
 							}
@@ -149,7 +171,10 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						path = '/register/delivery-man';
 					}
 				} catch (error) {
-					console.error('Error fetching justification pieces:', error);
+					console.error(
+						'Error fetching justification pieces:',
+						error
+					);
 					path = '/register/delivery-man';
 				}
 				break;
@@ -227,23 +252,28 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						justificationPieceData.data.length > 0
 					) {
 						// Filter for service provider account type only
-						const serviceProviderPieces = justificationPieceData.data.filter(
-							(piece: any) => piece.accountType === 'prestataire'
-						);
+						const serviceProviderPieces =
+							justificationPieceData.data.filter(
+								(piece: any) =>
+									piece.accountType === 'prestataire'
+							);
 
 						if (serviceProviderPieces.length > 0) {
 							const hasVerified = serviceProviderPieces.some(
-								(piece: any) => piece.verificationStatus === 'verified'
+								(piece: any) =>
+									piece.verificationStatus === 'verified'
 							);
 
 							const hasPending = serviceProviderPieces.some(
-								(piece: any) => piece.verificationStatus === 'pending'
+								(piece: any) =>
+									piece.verificationStatus === 'pending'
 							);
 
 							if (hasVerified) {
 								path = '/app_service-provider';
 							} else if (hasPending) {
-								path = '/documents-verification/pending-validation/service-provider';
+								path =
+									'/documents-verification/pending-validation/service-provider';
 							} else {
 								path = '/register/service-provider';
 							}
@@ -254,7 +284,10 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						path = '/register/service-provider';
 					}
 				} catch (error) {
-					console.error('Error fetching justification pieces:', error);
+					console.error(
+						'Error fetching justification pieces:',
+						error
+					);
 					path = '/register/service-provider';
 				}
 				break;
@@ -315,7 +348,12 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
 			method: 'GET',
@@ -330,7 +368,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				return res.json();
 			})
 			.then((data) => {
-				setIsAdmin(data.role === 'admin');
+				setIsAdmin(data.admin);
 				setUserName(data.firstName);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
@@ -418,7 +456,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 									: 'text-gray-700 hover:text-green-500'
 							}`}
 						>
-							<Package className="h-4 w-4 mr-1" />
+							<Package className='h-4 w-4 mr-1' />
 							{t('navigation.tracking')}
 						</button>
 					</nav>
@@ -494,7 +532,9 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								{isAdmin && (
 									<button
 										className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
-										onClick={() => navigateTo('admin', true)}
+										onClick={() =>
+											navigateTo('admin', true)
+										}
 									>
 										{t('common.adminDashboard')}
 									</button>
@@ -579,11 +619,9 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 										? 'text-green-500 font-medium'
 										: 'text-gray-700'
 								}`}
-								onClick={() =>
-									navigateTo('tracking', true)
-								}
+								onClick={() => navigateTo('tracking', true)}
 							>
-								<Package className="h-4 w-4 mr-1" />
+								<Package className='h-4 w-4 mr-1' />
 								{t('navigation.tracking')}
 							</button>
 						</li>

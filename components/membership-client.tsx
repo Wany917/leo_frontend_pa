@@ -21,8 +21,8 @@ interface UserSubscription {
 	id: number;
 	subscriptionType: 'free' | 'starter' | 'premium';
 	monthly_price: number;
-	start_date: string;
-	end_date: string | null;
+	startDate: string;
+	endDate: string | null;
 	status: 'active' | 'expired' | 'cancelled';
 	is_active: boolean;
 	is_expired: boolean;
@@ -51,7 +51,12 @@ export default function MembershipClient() {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		const fetchData = async () => {
 			try {
@@ -287,13 +292,11 @@ export default function MembershipClient() {
 										<ul className='space-y-2 mb-6'>
 											<li className='flex items-center text-sm'>
 												<Check className='h-4 w-4 text-green-500 mr-2' />
-												{
-													plan.features
-														.max_packages_per_month < 0
-														? 'Unlimited'
-														: plan.features
-															.max_packages_per_month
-												}{' '}
+												{plan.features
+													.max_packages_per_month < 0
+													? 'Unlimited'
+													: plan.features
+															.max_packages_per_month}{' '}
 												packages/month
 											</li>
 											<li className='flex items-center text-sm'>

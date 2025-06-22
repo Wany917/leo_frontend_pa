@@ -37,7 +37,7 @@ export default function app_clientClient() {
 		},
 		onNewMessage: (data) => {
 			// Géré par le hook WebSocket avec toast
-		}
+		},
 	});
 
 	useEffect(() => {
@@ -55,7 +55,7 @@ export default function app_clientClient() {
 	const loadUserAndServices = async () => {
 		try {
 			setLoading(true);
-			
+
 			// Charger le profil utilisateur
 			const userResponse = await clientService.getProfile();
 			if (userResponse.success) {
@@ -63,8 +63,8 @@ export default function app_clientClient() {
 			}
 
 			// Charger les services disponibles
-			const servicesResponse = await clientService.searchServices('', { 
-				availability: true 
+			const servicesResponse = await clientService.searchServices('', {
+				availability: true,
 			});
 			if (servicesResponse.success && servicesResponse.data) {
 				setServices(servicesResponse.data.slice(0, 6)); // Limiter à 6 services pour l'affichage
@@ -86,8 +86,8 @@ export default function app_clientClient() {
 
 		try {
 			setLoading(true);
-			const response = await clientService.searchServices(query, { 
-				availability: true 
+			const response = await clientService.searchServices(query, {
+				availability: true,
 			});
 			if (response.success && response.data) {
 				setServices(response.data);
@@ -124,12 +124,12 @@ export default function app_clientClient() {
 		const imageMap: Record<string, string> = {
 			'baby-sitting': '/baby-sitter.jpg',
 			'pet-sitting': '/dog-sitter.jpg',
-			'transport': '/airport-ride.jpg',
-			'delivery': '/delivery-service.jpg',
-			'cleaning': '/cleaning-service.jpg',
-			'garden': '/garden-service.jpg'
+			transport: '/airport-ride.jpg',
+			delivery: '/delivery-service.jpg',
+			cleaning: '/cleaning-service.jpg',
+			garden: '/garden-service.jpg',
 		};
-		
+
 		return imageMap[service.category || ''] || '/placeholder.svg';
 	};
 
@@ -196,7 +196,9 @@ export default function app_clientClient() {
 				<h1
 					className={`text-2xl sm:text-3xl text-center text-green-50 mb-8 ${sansitaOne.className}`}
 				>
-					{user ? t('app_client.welcomeUser', { name: user.first_name }) : t('app_client.welcome')}
+					{user
+						? t('app_client.welcomeUser', { name: user.first_name })
+						: t('app_client.welcome')}
 				</h1>
 
 				{/* Search Bar */}
@@ -220,7 +222,7 @@ export default function app_clientClient() {
 
 				{/* Error Message */}
 				{error && (
-					<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8">
+					<div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8'>
 						{error}
 					</div>
 				)}
@@ -233,9 +235,11 @@ export default function app_clientClient() {
 				</h2>
 
 				{loading && !error ? (
-					<div className="flex justify-center items-center py-12">
-						<Loader2 className="h-8 w-8 animate-spin text-green-500" />
-						<span className="ml-2 text-gray-600">Chargement des services...</span>
+					<div className='flex justify-center items-center py-12'>
+						<Loader2 className='h-8 w-8 animate-spin text-green-500' />
+						<span className='ml-2 text-gray-600'>
+							Chargement des services...
+						</span>
 					</div>
 				) : (
 					<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-8'>
@@ -273,8 +277,8 @@ export default function app_clientClient() {
 									</p>
 
 									{service.category && (
-										<div className="mb-3">
-											<span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+										<div className='mb-3'>
+											<span className='inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full'>
 												{service.category}
 											</span>
 										</div>
@@ -300,11 +304,13 @@ export default function app_clientClient() {
 
 				{/* No Services Message */}
 				{!loading && !error && displayServices.length === 0 && (
-					<div className="text-center py-12">
-						<p className="text-gray-600 text-lg">{t('app_client.noServicesFound')}</p>
-						<button 
+					<div className='text-center py-12'>
+						<p className='text-gray-600 text-lg'>
+							{t('app_client.noServicesFound')}
+						</p>
+						<button
 							onClick={loadUserAndServices}
-							className="mt-4 bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors"
+							className='mt-4 bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition-colors'
 						>
 							Réessayer
 						</button>

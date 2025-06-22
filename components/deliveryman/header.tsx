@@ -25,37 +25,45 @@ export default function DeliverymanHeader({
 		setIsUserMenuOpen(!isUserMenuOpen);
 	};
 
-	const navigateTo = async (buttonName: string,closeMenu: boolean = false) => {
+	const navigateTo = async (
+		buttonName: string,
+		closeMenu: boolean = false
+	) => {
 		let path = '';
 
-        const token =
-            sessionStorage.getItem('authToken') ||
-            localStorage.getItem('authToken');
-        if (!token) return;
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
-        let user_id = '';
-        
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
-                {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                credentials: "include",
-                }
-            );
-            
-            if (!response.ok) throw new Error('Failed to fetch user data');
-            
-            const userData = await response.json();
-            user_id = userData.id;
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-            return;
-        }
+		let user_id = '';
+
+		try {
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					credentials: 'include',
+				}
+			);
+
+			if (!response.ok) throw new Error('Failed to fetch user data');
+
+			const userData = await response.json();
+			user_id = userData.id;
+		} catch (error) {
+			console.error('Error fetching user data:', error);
+			return;
+		}
 
 		switch (buttonName) {
 			case 'edit-account':
@@ -69,54 +77,67 @@ export default function DeliverymanHeader({
 				break;
 			case 'service-provider':
 				try {
-                    if (!user_id) {
-                        console.error('User ID not available');
-                        path = '/register/service-provider';
-                        break;
-                    }
-                    
-                    const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
-                        {
-                            method: "GET",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${token}`,
-                            },
-                            credentials: "include",
-                        }
-                    );
-                    
-                    if (!response.ok) {
-                        throw new Error(`API request failed with status ${response.status}`);
-                    }
-                    
-                    const justificationPieceData = await response.json();
-                    
-                    if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
-                        const hasVerified = justificationPieceData.justificationPieces.some(
-                            (piece: any) => piece.verificationStatus === 'verified'
-                        );
-                    
-                        const hasPending = justificationPieceData.justificationPieces.some(
-                            (piece: any) => piece.verificationStatus === 'pending'
-                        );
-                        
-                        if (hasVerified) {
-                            path = '/app_service-provider';
-                        } else if (hasPending) {
-                            path = '/documents-verification/pending-validation/service-provider';
-                        } else {
-                            path = '/register/service-provider';
-                        }
-                    } else {
-                        path = '/register/service-provider';
-                    }
-                } catch (error) {
-                    console.error('Error fetching justification pieces:', error);
-                    path = '/register/service-provider';
-                }
-                break;
+					if (!user_id) {
+						console.error('User ID not available');
+						path = '/register/service-provider';
+						break;
+					}
+
+					const response = await fetch(
+						`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${token}`,
+							},
+							credentials: 'include',
+						}
+					);
+
+					if (!response.ok) {
+						throw new Error(
+							`API request failed with status ${response.status}`
+						);
+					}
+
+					const justificationPieceData = await response.json();
+
+					if (
+						justificationPieceData.justificationPieces &&
+						justificationPieceData.justificationPieces.length > 0
+					) {
+						const hasVerified =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'verified'
+							);
+
+						const hasPending =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'pending'
+							);
+
+						if (hasVerified) {
+							path = '/app_service-provider';
+						} else if (hasPending) {
+							path =
+								'/documents-verification/pending-validation/service-provider';
+						} else {
+							path = '/register/service-provider';
+						}
+					} else {
+						path = '/register/service-provider';
+					}
+				} catch (error) {
+					console.error(
+						'Error fetching justification pieces:',
+						error
+					);
+					path = '/register/service-provider';
+				}
+				break;
 			case 'logout':
 				path = '/logout';
 				break;
@@ -151,7 +172,12 @@ export default function DeliverymanHeader({
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
 			method: 'GET',
@@ -231,7 +257,9 @@ export default function DeliverymanHeader({
 
 							<button
 								className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
-								onClick={() => navigateTo('service-provider', true)}
+								onClick={() =>
+									navigateTo('service-provider', true)
+								}
 							>
 								{t('common.serviceProvider')}
 							</button>

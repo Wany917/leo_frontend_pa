@@ -76,7 +76,7 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
       console.log('Chargement des détails de la livraison:', id)
       
       const deliveryResponse: any = await executeGetDelivery(
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
+        () => fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const userProfile = await executeGetProfile(livreurService.getProfile())
+        const userProfile = await executeGetProfile(() => livreurService.getProfile())
         
         if (!userProfile?.livreur?.id) {
           console.error('Utilisateur non-livreur:', userProfile)

@@ -68,7 +68,7 @@ export function DashboardContent() {
         return res.json()
       })
       .then((data) => {
-        if (data.role !== "admin") {
+        if (!data.admin) {
           router.push("/app_client")
         }
       })

@@ -42,6 +42,7 @@ import {
 	Phone,
 	Mail,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface JustificationPiece {
 	id: number;
@@ -103,9 +104,9 @@ export function ValidationsContent() {
 	const [justificationPieces, setJustificationPieces] = useState<
 		JustificationPiece[]
 	>([]);
-	const [merchantRequests, setMerchantRequests] = useState<
-		MerchantRequest[]
-	>([]);
+	const [merchantRequests, setMerchantRequests] = useState<MerchantRequest[]>(
+		[]
+	);
 	const [loading, setLoading] = useState(true);
 	const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
 		isOpen: false,
@@ -113,10 +114,12 @@ export function ValidationsContent() {
 		description: '',
 		action: () => {},
 	});
-	const [merchantDetailsDialog, setMerchantDetailsDialog] = useState<MerchantDetailsDialog>({
-		isOpen: false,
-		merchant: null,
-	});
+	const [merchantDetailsDialog, setMerchantDetailsDialog] =
+		useState<MerchantDetailsDialog>({
+			isOpen: false,
+			merchant: null,
+		});
+	const router = useRouter();
 
 	useEffect(() => {
 		fetchPendingValidations();
@@ -128,44 +131,57 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/unverified`);
-			const response_commercant = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/commercants/unverified`);
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/unverified`
+			);
+			const response_commercant = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/commercants/unverified`
+			);
 
 			if (response.ok && response_commercant.ok) {
 				const data = await response.json();
 				const merchantData = await response_commercant.json();
-				
+
 				setJustificationPieces(data.data);
-				
+
 				const merchantsWithUsers = await Promise.all(
-					merchantData.commercants.map(async (merchant: MerchantRequest) => {
-						try {
-							const userResponse = await fetch(
-								`${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/${merchant.id}`,
-								{
-									headers: {
-										Authorization: `Bearer ${token}`,
-									},
+					merchantData.commercants.map(
+						async (merchant: MerchantRequest) => {
+							try {
+								const userResponse = await fetch(
+									`${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/${merchant.id}`,
+									{
+										headers: {
+											Authorization: `Bearer ${token}`,
+										},
+									}
+								);
+								if (userResponse.ok) {
+									const userData = await userResponse.json();
+									return {
+										...merchant,
+										utilisateur: userData,
+									};
 								}
-							);
-							if (userResponse.ok) {
-								const userData = await userResponse.json();
-								return {
-									...merchant,
-									utilisateur: userData,
-								};
+							} catch (error) {
+								console.error(
+									'Error fetching user for merchant:',
+									error
+								);
 							}
-						} catch (error) {
-							console.error('Error fetching user for merchant:', error);
+							return merchant;
 						}
-						return merchant;
-					})
+					)
 				);
-				
+
 				setMerchantRequests(merchantsWithUsers);
-				
 			} else {
 				toast({
 					title: t('admin.error'),
@@ -220,7 +236,7 @@ export function ValidationsContent() {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						utilisateur_id: userId
+						utilisateur_id: userId,
 					}),
 				}
 			);
@@ -244,7 +260,7 @@ export function ValidationsContent() {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						utilisateur_id: userId
+						utilisateur_id: userId,
 					}),
 				}
 			);
@@ -262,9 +278,9 @@ export function ValidationsContent() {
 		setConfirmDialog({
 			isOpen: true,
 			title: t('admin.validateRequest'),
-			description: `${t(
-				'admin.validateRequestDescription'
-			)} ${merchant.utilisateur?.firstName || ''} ${merchant.utilisateur?.lastName || ''}?`,
+			description: `${t('admin.validateRequestDescription')} ${
+				merchant.utilisateur?.firstName || ''
+			} ${merchant.utilisateur?.lastName || ''}?`,
 			action: () => validateMerchantRequest(merchant.id),
 		});
 	};
@@ -273,9 +289,9 @@ export function ValidationsContent() {
 		setConfirmDialog({
 			isOpen: true,
 			title: t('admin.rejectRequest'),
-			description: `${t(
-				'admin.rejectRequestDescription'
-			)} ${merchant.utilisateur?.firstName || ''} ${merchant.utilisateur?.lastName || ''}?`,
+			description: `${t('admin.rejectRequestDescription')} ${
+				merchant.utilisateur?.firstName || ''
+			} ${merchant.utilisateur?.lastName || ''}?`,
 			action: () => rejectMerchantRequest(merchant.id),
 		});
 	};
@@ -292,7 +308,12 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/commercants/verify/${id}`,
@@ -332,7 +353,12 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/commercants/reject/${id}`,
@@ -373,7 +399,13 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+				
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			// Get the justification piece details first
 			const justificationResponse = await fetch(
@@ -407,9 +439,7 @@ export function ValidationsContent() {
 			if (response.ok) {
 				if (roleType === 'livreur') {
 					await createDeliverymanAccount(userId);
-				} else if (
-					roleType === 'prestataire'
-				) {
+				} else if (roleType === 'prestataire') {
 					await createServiceProviderAccount(userId);
 				}
 
@@ -440,7 +470,12 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			// Get the justification piece details first to get the file path
 			const justificationResponse = await fetch(
@@ -560,7 +595,12 @@ export function ValidationsContent() {
 			const token =
 				localStorage.getItem('authToken') ||
 				sessionStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/documents/${documentName}`,
@@ -661,7 +701,8 @@ export function ValidationsContent() {
 		);
 	}
 
-	const totalPendingRequests = justificationPieces.length + merchantRequests.length;
+	const totalPendingRequests =
+		justificationPieces.length + merchantRequests.length;
 
 	return (
 		<div className='space-y-6'>
@@ -682,7 +723,8 @@ export function ValidationsContent() {
 						{merchantRequests.length} Merchants
 					</Badge>
 					<Badge variant='default' className='text-lg px-3 py-1'>
-						{totalPendingRequests} Total {t('admin.pendingRequests')}
+						{totalPendingRequests} Total{' '}
+						{t('admin.pendingRequests')}
 					</Badge>
 				</div>
 			</div>
@@ -706,21 +748,31 @@ export function ValidationsContent() {
 						<div className='space-y-4'>
 							<h2 className='text-xl font-semibold flex items-center gap-2'>
 								<FileText className='h-5 w-5' />
-								Document Validations ({justificationPieces.length})
+								Document Validations (
+								{justificationPieces.length})
 							</h2>
 							{justificationPieces.map((piece) => (
-								<Card key={piece.id} className='overflow-hidden'>
+								<Card
+									key={piece.id}
+									className='overflow-hidden'
+								>
 									<CardHeader>
 										<div className='flex justify-between items-start'>
 											<div className='space-y-1'>
 												<CardTitle className='flex items-center gap-2'>
 													<User className='h-5 w-5' />
-													{piece.utilisateur.firstName}{' '}
+													{
+														piece.utilisateur
+															.firstName
+													}{' '}
 													{piece.utilisateur.lastName}
 												</CardTitle>
 												<CardDescription className='flex items-center gap-4'>
 													<span>
-														{piece.utilisateur.email}
+														{
+															piece.utilisateur
+																.email
+														}
 													</span>
 													{/* Fix 3: Display all user roles */}
 													<div className='flex gap-1 flex-wrap'>
@@ -748,20 +800,33 @@ export function ValidationsContent() {
 												<div className='flex items-center gap-2'>
 													<FileText className='h-4 w-4 text-muted-foreground' />
 													<span className='text-sm font-medium'>
-														{t('admin.documentType')}:
+														{t(
+															'admin.documentType'
+														)}
+														:
 													</span>
 													<span className='text-sm'>
-														{getDocumentTypeLabel(piece.documentType)}
+														{getDocumentTypeLabel(
+															piece.documentType
+														)}
 													</span>
 												</div>
 												{/* Add this new section for account type */}
 												<div className='flex items-center gap-2'>
 													<User className='h-4 w-4 text-muted-foreground' />
 													<span className='text-sm font-medium'>
-														{t('admin.desiredAccountType')}:
+														{t(
+															'admin.desiredAccountType'
+														)}
+														:
 													</span>
-													<Badge variant='default' className='text-xs'>
-														{getAccountTypeLabel(piece.accountType)}
+													<Badge
+														variant='default'
+														className='text-xs'
+													>
+														{getAccountTypeLabel(
+															piece.accountType
+														)}
 													</Badge>
 												</div>
 												<div className='flex items-center gap-2'>
@@ -770,7 +835,11 @@ export function ValidationsContent() {
 														{t('admin.uploadedAt')}:
 													</span>
 													<span className='text-sm'>
-														{new Date(piece.uploadedAt).toLocaleDateString('fr-FR')}
+														{new Date(
+															piece.uploadedAt
+														).toLocaleDateString(
+															'fr-FR'
+														)}
 													</span>
 												</div>
 											</div>
@@ -783,15 +852,22 @@ export function ValidationsContent() {
 												onClick={() =>
 													downloadDocument(
 														piece.filePath,
-														`${new Date(piece.uploadedAt)
+														`${new Date(
+															piece.uploadedAt
+														)
 															.toISOString()
 															.slice(0, 10)
-															.replace(/-/g, '')} - ${
+															.replace(
+																/-/g,
+																''
+															)} - ${
 															piece.documentType
 														} - ${
-															piece.utilisateur.firstName
+															piece.utilisateur
+																.firstName
 														} ${
-															piece.utilisateur.lastName
+															piece.utilisateur
+																.lastName
 														}_`
 													)
 												}
@@ -806,8 +882,10 @@ export function ValidationsContent() {
 												onClick={() =>
 													handleValidate(
 														piece.id,
-														piece.utilisateur.firstName,
-														piece.utilisateur.lastName
+														piece.utilisateur
+															.firstName,
+														piece.utilisateur
+															.lastName
 													)
 												}
 												className='flex items-center gap-2 bg-green-600 hover:bg-green-700'
@@ -821,8 +899,10 @@ export function ValidationsContent() {
 												onClick={() =>
 													handleReject(
 														piece.id,
-														piece.utilisateur.firstName,
-														piece.utilisateur.lastName
+														piece.utilisateur
+															.firstName,
+														piece.utilisateur
+															.lastName
 													)
 												}
 												className='flex items-center gap-2'
@@ -845,7 +925,10 @@ export function ValidationsContent() {
 								Merchant Requests ({merchantRequests.length})
 							</h2>
 							{merchantRequests.map((merchant) => (
-								<Card key={merchant.id} className='overflow-hidden'>
+								<Card
+									key={merchant.id}
+									className='overflow-hidden'
+								>
 									<CardHeader>
 										<div className='flex justify-between items-start'>
 											<div className='space-y-1'>
@@ -855,13 +938,25 @@ export function ValidationsContent() {
 												</CardTitle>
 												<CardDescription className='flex items-center gap-4'>
 													<span>
-														{merchant.utilisateur?.firstName} {merchant.utilisateur?.lastName}
+														{
+															merchant.utilisateur
+																?.firstName
+														}{' '}
+														{
+															merchant.utilisateur
+																?.lastName
+														}
 													</span>
 													<span className='text-muted-foreground'>
-														{merchant.utilisateur?.email}
+														{
+															merchant.utilisateur
+																?.email
+														}
 													</span>
 													<Badge variant='outline'>
-														{t('validations.roles.commercant')}
+														{t(
+															'validations.roles.commercant'
+														)}
 													</Badge>
 												</CardDescription>
 											</div>
@@ -888,7 +983,11 @@ export function ValidationsContent() {
 														Requested:
 													</span>
 													<span className='text-sm'>
-														{new Date(merchant.createdAt).toLocaleDateString('fr-FR')}
+														{new Date(
+															merchant.createdAt
+														).toLocaleDateString(
+															'fr-FR'
+														)}
 													</span>
 												</div>
 											</div>
@@ -898,7 +997,11 @@ export function ValidationsContent() {
 											<Button
 												variant='outline'
 												size='sm'
-												onClick={() => showMerchantDetails(merchant)}
+												onClick={() =>
+													showMerchantDetails(
+														merchant
+													)
+												}
 												className='flex items-center gap-2'
 											>
 												<Eye className='h-4 w-4' />
@@ -907,7 +1010,11 @@ export function ValidationsContent() {
 											<Button
 												variant='default'
 												size='sm'
-												onClick={() => handleMerchantValidate(merchant)}
+												onClick={() =>
+													handleMerchantValidate(
+														merchant
+													)
+												}
 												className='flex items-center gap-2 bg-green-600 hover:bg-green-700'
 											>
 												<CheckCircle className='h-4 w-4' />
@@ -916,7 +1023,11 @@ export function ValidationsContent() {
 											<Button
 												variant='destructive'
 												size='sm'
-												onClick={() => handleMerchantReject(merchant)}
+												onClick={() =>
+													handleMerchantReject(
+														merchant
+													)
+												}
 												className='flex items-center gap-2'
 											>
 												<XCircle className='h-4 w-4' />
@@ -976,7 +1087,10 @@ export function ValidationsContent() {
 			<Dialog
 				open={merchantDetailsDialog.isOpen}
 				onOpenChange={(open) =>
-					setMerchantDetailsDialog((prev) => ({ ...prev, isOpen: open }))
+					setMerchantDetailsDialog((prev) => ({
+						...prev,
+						isOpen: open,
+					}))
 				}
 			>
 				<DialogContent className='sm:max-w-[425px]'>
@@ -993,39 +1107,66 @@ export function ValidationsContent() {
 						<div className='grid gap-4 py-4'>
 							<div className='grid grid-cols-4 items-center gap-4'>
 								<Store className='h-4 w-4 text-muted-foreground' />
-								<span className='text-sm font-medium'>Store Name:</span>
+								<span className='text-sm font-medium'>
+									Store Name:
+								</span>
 								<span className='col-span-2 text-sm'>
 									{merchantDetailsDialog.merchant.storeName}
 								</span>
 							</div>
 							<div className='grid grid-cols-4 items-center gap-4'>
 								<Phone className='h-4 w-4 text-muted-foreground' />
-								<span className='text-sm font-medium'>Phone:</span>
+								<span className='text-sm font-medium'>
+									Phone:
+								</span>
 								<span className='col-span-2 text-sm'>
-									{merchantDetailsDialog.merchant.contactNumber}
+									{
+										merchantDetailsDialog.merchant
+											.contactNumber
+									}
 								</span>
 							</div>
 							<div className='grid grid-cols-4 items-center gap-4'>
 								<Mail className='h-4 w-4 text-muted-foreground' />
-								<span className='text-sm font-medium'>Email:</span>
+								<span className='text-sm font-medium'>
+									Email:
+								</span>
 								<span className='col-span-2 text-sm'>
-									{merchantDetailsDialog.merchant.utilisateur?.email}
+									{
+										merchantDetailsDialog.merchant
+											.utilisateur?.email
+									}
 								</span>
 							</div>
 							<div className='grid grid-cols-4 items-center gap-4'>
 								<User className='h-4 w-4 text-muted-foreground' />
-								<span className='text-sm font-medium'>Owner:</span>
+								<span className='text-sm font-medium'>
+									Owner:
+								</span>
 								<span className='col-span-2 text-sm'>
-									{merchantDetailsDialog.merchant.utilisateur?.firstName}{' '}
-									{merchantDetailsDialog.merchant.utilisateur?.lastName}
+									{
+										merchantDetailsDialog.merchant
+											.utilisateur?.firstName
+									}{' '}
+									{
+										merchantDetailsDialog.merchant
+											.utilisateur?.lastName
+									}
 								</span>
 							</div>
 							{merchantDetailsDialog.merchant.businessAddress && (
 								<div className='grid grid-cols-4 items-center gap-4'>
-									<span className='h-4 w-4 text-muted-foreground'>📍</span>
-									<span className='text-sm font-medium'>Address:</span>
+									<span className='h-4 w-4 text-muted-foreground'>
+										📍
+									</span>
+									<span className='text-sm font-medium'>
+										Address:
+									</span>
 									<span className='col-span-2 text-sm'>
-										{merchantDetailsDialog.merchant.businessAddress}
+										{
+											merchantDetailsDialog.merchant
+												.businessAddress
+										}
 									</span>
 								</div>
 							)}

@@ -345,7 +345,7 @@ export const livreurService = {
   // Obtenir son historique de positions
   async getPositionHistory(livreurId: number, filters?: {
     start_date?: string;
-    end_date?: string;
+    endDate?: string;
     livraison_id?: number;
   }) {
     return axios.get(`/tracking/livreur/${livreurId}/positions`, { params: filters });

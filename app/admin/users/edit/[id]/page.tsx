@@ -69,8 +69,15 @@ export default function EditUserPage() {
 
 	const handleSave = async () => {
 		try {
-            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            if (!token) return;
+			const token =
+				localStorage.getItem('authToken') ||
+				sessionStorage.getItem('authToken');
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/admins/update-user/${userId}`,
 				{
@@ -129,8 +136,15 @@ export default function EditUserPage() {
 		}
 
 		try {
-			const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-			if (!token) return;
+			const token =
+				localStorage.getItem('authToken') ||
+				sessionStorage.getItem('authToken');
+			if (!token) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				router.push('/login');
+				return;
+			}
 			const response = await fetch(
 				`${process.env.NEXT_PUBLIC_API_URL}/admins/reset-password/${userId}`,
 				{
@@ -139,7 +153,9 @@ export default function EditUserPage() {
 						'Content-Type': 'application/json',
 						Authorization: `Bearer ${token}`,
 					},
-					body: JSON.stringify({ newPassword: passwordData.newPassword }),
+					body: JSON.stringify({
+						newPassword: passwordData.newPassword,
+					}),
 				}
 			);
 
@@ -150,8 +166,8 @@ export default function EditUserPage() {
 					variant: 'default',
 				});
 				setShowResetDialog(false);
-				setPasswordData(prev => ({ ...prev, newPassword: '' }));
-				setPasswordData(prev => ({ ...prev, confirmPassword: '' }));
+				setPasswordData((prev) => ({ ...prev, newPassword: '' }));
+				setPasswordData((prev) => ({ ...prev, confirmPassword: '' }));
 			} else {
 				toast({
 					variant: 'destructive',
@@ -226,8 +242,6 @@ export default function EditUserPage() {
 			[field]: value,
 		}));
 	};
-
-	
 
 	if (loading) {
 		return (

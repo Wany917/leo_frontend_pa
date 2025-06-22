@@ -19,7 +19,7 @@ import {
 	ArrowUp,
 	BellRing,
 	PartyPopper,
-	CheckCircle, 
+	CheckCircle,
 } from 'lucide-react';
 import { useLanguage } from '@/components/language-context';
 import LanguageSelector from '@/components/language-selector';
@@ -114,7 +114,12 @@ export default function DeliverymanDashboard() {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
 			method: 'GET',
@@ -202,7 +207,7 @@ export default function DeliverymanDashboard() {
 	const loadLivraisonsData = async () => {
 		try {
 			console.log('Tentative de chargement des livraisons...');
-			const livraisonsResponse: any = await executeGetLivraisons(
+			const livraisonsResponse: any = await executeGetLivraisons(() =>
 				livreurService.getMyLivraisons()
 			);
 			console.log(
@@ -459,7 +464,12 @@ export default function DeliverymanDashboard() {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+			localStorage.removeItem('authToken');
+			sessionStorage.removeItem('authToken');
+			router.push('/login');
+			return;
+		}
 
 		let user_id = '';
 

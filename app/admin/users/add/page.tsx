@@ -33,12 +33,12 @@ export default function AddAdministratorPage() {
           <SideBar activePage="users" />
     
           {/* Main content */}
-          <div className="flex-1 overflow-x-hidden">
+          <div className="flex-1 overflow-x-visible">
             {/* Header */}
             <ResponsiveHeader />
 
             {/* Main content */}  
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-visible overflow-x-visible p-4 md:p-6">
           <AddUsersContent />
         </main>
       </div>

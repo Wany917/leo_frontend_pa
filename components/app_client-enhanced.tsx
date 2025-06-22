@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, Star, Package, Truck, MessageCircle, Plus } from 'lucide-react';
+import {
+	Search,
+	Star,
+	Package,
+	Truck,
+	MessageCircle,
+	Plus,
+} from 'lucide-react';
 import { Cantata_One as Sansita_One } from 'next/font/google';
 import { useLanguage } from '@/components/language-context';
 import { useClientWebSocket } from '@/hooks/use-client-websocket';
@@ -24,13 +31,28 @@ export default function AppClientEnhanced() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showOnboarding, setShowOnboarding] = useState(false);
 	const [user, setUser] = useState<User | null>(null);
-	const [activeTab, setActiveTab] = useState<'services' | 'my-deliveries' | 'my-packages'>('services');
+	const [activeTab, setActiveTab] = useState<
+		'services' | 'my-deliveries' | 'my-packages'
+	>('services');
 
 	// API calls
-	const { execute: executeGetProfile, loading: profileLoading } = useApiCall<User>();
-	const { execute: executeGetServices, data: services, loading: servicesLoading } = useApiCall<any[]>();
-	const { execute: executeGetMyLivraisons, data: myLivraisons, loading: livraisonsLoading } = useApiCall<Livraison[]>();
-	const { execute: executeGetMyColis, data: myColis, loading: colisLoading } = useApiCall<any[]>();
+	const { execute: executeGetProfile, loading: profileLoading } =
+		useApiCall<User>();
+	const {
+		execute: executeGetServices,
+		data: services,
+		loading: servicesLoading,
+	} = useApiCall<any[]>();
+	const {
+		execute: executeGetMyLivraisons,
+		data: myLivraisons,
+		loading: livraisonsLoading,
+	} = useApiCall<Livraison[]>();
+	const {
+		execute: executeGetMyColis,
+		data: myColis,
+		loading: colisLoading,
+	} = useApiCall<any[]>();
 
 	// WebSocket pour les notifications en temps réel
 	const websocket = useClientWebSocket({
@@ -60,7 +82,9 @@ export default function AppClientEnhanced() {
 	useEffect(() => {
 		const loadProfile = async () => {
 			try {
-				const response = await executeGetProfile(clientService.getProfile());
+				const response = await executeGetProfile(
+					clientService.getProfile()
+				);
 				setUser(response);
 			} catch (error) {
 				console.error('Erreur lors du chargement du profil:', error);
@@ -72,7 +96,9 @@ export default function AppClientEnhanced() {
 
 	// Gérer l'onboarding
 	useEffect(() => {
-		const hasCompletedOnboarding = localStorage.getItem('ecodeli-onboarding-completed');
+		const hasCompletedOnboarding = localStorage.getItem(
+			'ecodeli-onboarding-completed'
+		);
 		if (!hasCompletedOnboarding) {
 			setShowOnboarding(true);
 		}
@@ -163,7 +189,10 @@ export default function AppClientEnhanced() {
 			{showOnboarding && (
 				<OnboardingOverlay
 					onComplete={() => {
-						localStorage.setItem('ecodeli-onboarding-completed', 'true');
+						localStorage.setItem(
+							'ecodeli-onboarding-completed',
+							'true'
+						);
 						setShowOnboarding(false);
 					}}
 				/>
@@ -185,12 +214,20 @@ export default function AppClientEnhanced() {
 			<main className='container mx-auto px-4 py-8'>
 				{/* Welcome Section */}
 				<div className='text-center mb-8'>
-					<h1 className={`text-2xl sm:text-3xl text-green-50 mb-4 ${sansitaOne.className}`}>
-						{user ? t('app_client.welcomeBack', { name: user.first_name }) : t('app_client.welcome')}
+					<h1
+						className={`text-2xl sm:text-3xl text-green-50 mb-4 ${sansitaOne.className}`}
+					>
+						{user
+							? t('app_client.welcomeBack', {
+									name: user.first_name,
+							  })
+							: t('app_client.welcome')}
 					</h1>
-					
+
 					{profileLoading && (
-						<div className='text-gray-500'>{t('common.loading')}</div>
+						<div className='text-gray-500'>
+							{t('common.loading')}
+						</div>
 					)}
 				</div>
 
@@ -235,7 +272,10 @@ export default function AppClientEnhanced() {
 
 				{/* Search Bar (only for services) */}
 				{activeTab === 'services' && (
-					<form onSubmit={handleSearch} className='max-w-xl mx-auto mb-8'>
+					<form
+						onSubmit={handleSearch}
+						className='max-w-xl mx-auto mb-8'
+					>
 						<div className='relative'>
 							<input
 								type='text'
@@ -259,7 +299,9 @@ export default function AppClientEnhanced() {
 				{activeTab === 'services' && (
 					<div>
 						<div className='flex justify-between items-center mb-6'>
-							<h2 className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}>
+							<h2
+								className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}
+							>
 								{t('app_client.availableServices')}
 							</h2>
 							<Link
@@ -273,7 +315,9 @@ export default function AppClientEnhanced() {
 
 						{servicesLoading ? (
 							<div className='text-center py-8'>
-								<div className='text-gray-500'>{t('common.loading')}</div>
+								<div className='text-gray-500'>
+									{t('common.loading')}
+								</div>
 							</div>
 						) : services && services.length > 0 ? (
 							<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -284,8 +328,14 @@ export default function AppClientEnhanced() {
 									>
 										<div className='h-48 relative'>
 											<Image
-												src={service.image || '/placeholder.svg'}
-												alt={service.name || service.title}
+												src={
+													service.image ||
+													'/placeholder.svg'
+												}
+												alt={
+													service.name ||
+													service.title
+												}
 												fill
 												className='object-cover'
 											/>
@@ -293,11 +343,18 @@ export default function AppClientEnhanced() {
 										<div className='p-6'>
 											<div className='flex justify-between items-start mb-2'>
 												<h3 className='text-lg font-semibold'>
-													{service.name || service.title}
+													{service.name ||
+														service.title}
 												</h3>
 												{service.rating && (
 													<div className='flex'>
-														{[...Array(Math.floor(service.rating))].map((_, i) => (
+														{[
+															...Array(
+																Math.floor(
+																	service.rating
+																)
+															),
+														].map((_, i) => (
 															<Star
 																key={i}
 																className='h-4 w-4 fill-current text-yellow-400'
@@ -311,7 +368,9 @@ export default function AppClientEnhanced() {
 											</p>
 											<div className='flex justify-between items-center'>
 												<div className='bg-green-100 text-green-50 rounded-full px-3 py-1'>
-													€{service.base_price || service.price}
+													€
+													{service.base_price ||
+														service.price}
 												</div>
 												<Link
 													href={`/app_client/service/${service.id}`}
@@ -326,7 +385,9 @@ export default function AppClientEnhanced() {
 							</div>
 						) : (
 							<div className='text-center py-8'>
-								<p className='text-gray-500'>{t('app_client.noServicesFound')}</p>
+								<p className='text-gray-500'>
+									{t('app_client.noServicesFound')}
+								</p>
 							</div>
 						)}
 					</div>
@@ -335,14 +396,18 @@ export default function AppClientEnhanced() {
 				{activeTab === 'my-deliveries' && (
 					<div>
 						<div className='flex justify-between items-center mb-6'>
-							<h2 className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}>
+							<h2
+								className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}
+							>
 								{t('app_client.myDeliveries')}
 							</h2>
 						</div>
 
 						{livraisonsLoading ? (
 							<div className='text-center py-8'>
-								<div className='text-gray-500'>{t('common.loading')}</div>
+								<div className='text-gray-500'>
+									{t('common.loading')}
+								</div>
 							</div>
 						) : myLivraisons && myLivraisons.length > 0 ? (
 							<div className='space-y-4'>
@@ -354,18 +419,38 @@ export default function AppClientEnhanced() {
 										<div className='flex justify-between items-start mb-4'>
 											<div>
 												<h3 className='text-lg font-semibold mb-2'>
-													{t('livraison.from')} {livraison.pickup_location}
+													{t('livraison.from')}{' '}
+													{livraison.pickup_location}
 												</h3>
 												<p className='text-gray-600 mb-2'>
-													{t('livraison.to')} {livraison.dropoff_location}
+													{t('livraison.to')}{' '}
+													{livraison.dropoff_location}
 												</p>
 												<div className='flex items-center gap-4'>
-													<span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(livraison.status)}`}>
-														{getStatusText(livraison.status)}
+													<span
+														className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
+															livraison.status
+														)}`}
+													>
+														{getStatusText(
+															livraison.status
+														)}
 													</span>
 													{livraison.livreur && (
 														<span className='text-sm text-gray-500'>
-															{t('livraison.deliveredBy')} {livraison.livreur.first_name} {livraison.livreur.last_name}
+															{t(
+																'livraison.deliveredBy'
+															)}{' '}
+															{
+																livraison
+																	.livreur
+																	.first_name
+															}{' '}
+															{
+																livraison
+																	.livreur
+																	.last_name
+															}
 														</span>
 													)}
 												</div>
@@ -390,7 +475,8 @@ export default function AppClientEnhanced() {
 										</div>
 										{livraison.remarks && (
 											<p className='text-sm text-gray-500 mt-2'>
-												{t('livraison.remarks')}: {livraison.remarks}
+												{t('livraison.remarks')}:{' '}
+												{livraison.remarks}
 											</p>
 										)}
 									</div>
@@ -398,7 +484,9 @@ export default function AppClientEnhanced() {
 							</div>
 						) : (
 							<div className='text-center py-8'>
-								<p className='text-gray-500'>{t('app_client.noDeliveriesFound')}</p>
+								<p className='text-gray-500'>
+									{t('app_client.noDeliveriesFound')}
+								</p>
 								<Link
 									href='/app_client/announcements/create'
 									className='inline-block mt-4 bg-green-50 text-white px-6 py-2 rounded-lg hover:bg-green-400 transition-colors'
@@ -413,14 +501,18 @@ export default function AppClientEnhanced() {
 				{activeTab === 'my-packages' && (
 					<div>
 						<div className='flex justify-between items-center mb-6'>
-							<h2 className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}>
+							<h2
+								className={`text-xl sm:text-2xl text-green-50 ${sansitaOne.className}`}
+							>
 								{t('app_client.myPackages')}
 							</h2>
 						</div>
 
 						{colisLoading ? (
 							<div className='text-center py-8'>
-								<div className='text-gray-500'>{t('common.loading')}</div>
+								<div className='text-gray-500'>
+									{t('common.loading')}
+								</div>
 							</div>
 						) : myColis && myColis.length > 0 ? (
 							<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
@@ -432,22 +524,41 @@ export default function AppClientEnhanced() {
 										<div className='flex justify-between items-start mb-4'>
 											<div>
 												<h3 className='text-lg font-semibold mb-2'>
-													{t('colis.trackingNumber')}: {colis.tracking_number}
+													{t('colis.trackingNumber')}:{' '}
+													{colis.tracking_number}
 												</h3>
 												<p className='text-gray-600 mb-2'>
 													{colis.content_description}
 												</p>
-												<span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(colis.status)}`}>
-													{getStatusText(colis.status)}
+												<span
+													className={`px-3 py-1 rounded-full text-sm ${getStatusColor(
+														colis.status
+													)}`}
+												>
+													{getStatusText(
+														colis.status
+													)}
 												</span>
 											</div>
 										</div>
 										<div className='text-sm text-gray-500 mb-4'>
-											<p>{t('colis.weight')}: {colis.weight}kg</p>
-											<p>{t('colis.dimensions')}: {colis.length}×{colis.width}×{colis.height}cm</p>
+											<p>
+												{t('colis.weight')}:{' '}
+												{colis.weight}kg
+											</p>
+											<p>
+												{t('colis.dimensions')}:{' '}
+												{colis.length}×{colis.width}×
+												{colis.height}cm
+											</p>
 										</div>
 										<button
-											onClick={() => window.open(`/app_client/tracking/package/${colis.tracking_number}`, '_blank')}
+											onClick={() =>
+												window.open(
+													`/app_client/tracking/package/${colis.tracking_number}`,
+													'_blank'
+												)
+											}
 											className='w-full bg-green-50 text-white px-4 py-2 rounded-lg hover:bg-green-400 transition-colors'
 										>
 											{t('colis.track')}
@@ -457,7 +568,9 @@ export default function AppClientEnhanced() {
 							</div>
 						) : (
 							<div className='text-center py-8'>
-								<p className='text-gray-500'>{t('app_client.noPackagesFound')}</p>
+								<p className='text-gray-500'>
+									{t('app_client.noPackagesFound')}
+								</p>
 							</div>
 						)}
 					</div>
@@ -465,4 +578,4 @@ export default function AppClientEnhanced() {
 			</main>
 		</div>
 	);
-} 
+}

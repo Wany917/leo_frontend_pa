@@ -33,7 +33,7 @@ interface MultiRoleUser {
   livreur?: {
     id: number
     availabilityStatus: 'available' | 'busy' | 'offline'
-    rating: string
+    rating: number
   }
 }
 
@@ -60,10 +60,10 @@ export default function DeliverymanAnnouncements() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [user, setUser] = useState<MultiRoleUser | null>(null)
   const [loadingAccept, setLoadingAccept] = useState<{id: number, loading: boolean}>({ id: 0, loading: false })
+  const [announcementsLoading, setAnnouncementsLoading] = useState(false)
 
   // ✅ NOUVEAUX HOOKS - Architecture améliorée
   const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
-  const { execute: executeGetAnnouncements, loading: announcementsLoading } = useApiCall<any>()
   const { execute: executeAcceptDelivery } = useApiCallWithSuccess('Livraison acceptée avec succès !')
   
   // ✅ NOUVEAU - WebSocket pour notifications temps réel
@@ -86,20 +86,23 @@ export default function DeliverymanAnnouncements() {
   const loadAnnouncements = async () => {
     try {
       console.log('Chargement des annonces disponibles...')
+      setAnnouncementsLoading(true)
       
-      const announcesResponse: any = await executeGetAnnouncements(
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
-          },
-          credentials: 'include'
-        }).then(res => {
-          if (!res.ok) throw new Error('Erreur lors de la récupération des annonces')
-          return res.json()
-        })
-      )
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
+        },
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de la récupération des annonces')
+      }
+      
+      const announcesResponse = await response.json()
+      
       console.log('Annonces récupérées:', announcesResponse)
       
       // Extraire les annonces de la réponse
@@ -141,6 +144,8 @@ export default function DeliverymanAnnouncements() {
     } catch (error) {
       console.error("Erreur lors de la récupération des annonces:", error)
       // ✅ Les erreurs sont gérées automatiquement par les hooks
+    } finally {
+      setAnnouncementsLoading(false)
     }
   }
 
@@ -149,15 +154,25 @@ export default function DeliverymanAnnouncements() {
     const loadData = async () => {
       try {
         // 1. Charger le profil utilisateur d'abord
-        const userProfile = await executeGetProfile(livreurService.getProfile())
+        const userProfile = await livreurService.getProfile()
         
         // Vérifier que l'utilisateur est bien un livreur
-        if (!userProfile?.livreur?.id) {
+        if (!userProfile?.data?.id) {
           console.error('Utilisateur non autorisé : rôle livreur requis')
           return
         }
         
-        setUser(userProfile)
+        setUser({
+          id: userProfile.data.id,
+          firstName: userProfile.data.first_name || '',
+          lastName: userProfile.data.last_name || '',
+          email: userProfile.data.email || '',
+          livreur: {
+            id: userProfile.data.id,
+            availabilityStatus: userProfile.data.availability_status || 'available',
+            rating: userProfile.data.rating || 0
+          }
+        })
         
         // 2. Charger les annonces
         await loadAnnouncements()

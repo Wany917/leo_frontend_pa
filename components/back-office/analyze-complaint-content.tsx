@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,6 +9,7 @@ import { Download, ChevronDown } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { adminService } from "@/services/adminService"
 
 interface AnalyzeComplaintContentProps {
   id: string
@@ -17,37 +18,96 @@ interface AnalyzeComplaintContentProps {
 export function AnalyzeComplaintContent({ id }: AnalyzeComplaintContentProps) {
   const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(false)
+  const [complaint, setComplaint] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Données fictives pour la réclamation
+  useEffect(() => {
+    fetchComplaint()
+  }, [id])
+
+  const fetchComplaint = async () => {
+    try {
+      setLoading(true)
+      const response = await adminService.getComplaint(parseInt(id))
+      
+      if (response.success && response.data) {
+        setComplaint(response.data)
+      } else {
+        setError('Failed to fetch complaint')
+      }
+    } catch (err) {
+      console.error('Error fetching complaint:', err)
+      setError('Error loading complaint')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Loading complaint...</h1>
+      </div>
+    )
+  }
+
+  if (error || !complaint) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Error loading complaint</h1>
+        <p className="text-red-500">{error || 'Complaint not found'}</p>
+        <Link href="/admin/complaints" className="text-green-500 hover:underline">
+          Back to complaints
+        </Link>
+      </div>
+    )
+  }
+
+  // Transform backend data to match component format
   const complaintData = {
-    id: id,
-    client: "Killian",
-    announceId: "000001",
-    shippingPrice: "£20.00",
-    justificativePieces: [
-      { id: 1, name: "Picture_1_damage.png", url: "#" },
-      { id: 2, name: "Picture_2_damage.png", url: "#" },
-    ],
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatibus quia, nulla! Maiores et perferendis eaque, exercitationem praesentium nihil.",
+    id: complaint.id,
+    client: complaint.utilisateur?.nom || complaint.utilisateur?.email || 'Unknown User',
+    announceId: complaint.relatedOrderId || 'N/A',
+    shippingPrice: 'N/A', // This field might need to be added to backend
+    justificativePieces: complaint.imagePath ? [
+      { id: 1, name: complaint.imagePath.split('/').pop() || 'attachment.png', url: complaint.imagePath }
+    ] : [],
+    description: complaint.description,
+    status: complaint.status,
+    priority: complaint.priority
   }
 
-  const handleAccept = () => {
-    setIsLoading(true)
-    setTimeout(() => {
+  const handleAccept = async () => {
+    try {
+      setIsLoading(true)
+      await adminService.updateComplaintStatus(parseInt(id), {
+        status: 'resolved',
+        adminNotes: 'Complaint accepted and resolved by admin'
+      })
+      window.location.href = "/admin/complaints"
+    } catch (err) {
+      console.error('Error accepting complaint:', err)
+      setError('Failed to accept complaint')
+    } finally {
       setIsLoading(false)
-      window.location.href = "/complaints"
-    }, 1000)
+    }
   }
 
-  const handleReject = () => {
-    setIsLoading(true)
-    // Simuler une requête API
-    setTimeout(() => {
+  const handleReject = async () => {
+    try {
+      setIsLoading(true)
+      await adminService.updateComplaintStatus(parseInt(id), {
+        status: 'closed',
+        adminNotes: 'Complaint rejected by admin'
+      })
+      window.location.href = "/admin/complaints"
+    } catch (err) {
+      console.error('Error rejecting complaint:', err)
+      setError('Failed to reject complaint')
+    } finally {
       setIsLoading(false)
-      // Rediriger vers la page des réclamations
-      window.location.href = "/complaints"
-    }, 1000)
+    }
   }
 
   return (

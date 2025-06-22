@@ -27,7 +27,12 @@ export default function MessageDetailPage() {
 		const token =
 			sessionStorage.getItem('authToken') ||
 			localStorage.getItem('authToken');
-		if (!token) return;
+		if (!token) {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+      router.push('/login');
+      return;
+    }
 
 		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
 			method: 'GET',
@@ -163,7 +168,12 @@ export default function MessageDetailPage() {
 
 		try {
 			const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
-			if (!token) return;
+			if (!token) {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+      router.push('/login');
+      return;
+    }
 
 			// Envoyer le message via API
 			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/send`, {

@@ -25,22 +25,31 @@ export function ComplaintsTable({ data }: ComplaintsTableProps) {
   // Fonction pour rendre le badge de statut avec la bonne couleur
   const renderStatusBadge = (status: string) => {
     let bgColor = ""
+    let displayStatus = ""
 
     switch (status.toLowerCase()) {
-      case "pending":
+      case "open":
         bgColor = "bg-[#F8A097]"
+        displayStatus = "Open"
+        break
+      case "in_progress":
+        bgColor = "bg-[#FFA726]"
+        displayStatus = "In Progress"
         break
       case "resolved":
         bgColor = "bg-[#8CD790]"
+        displayStatus = "Resolved"
         break
-      case "rejected":
+      case "closed":
         bgColor = "bg-[#E57373]"
+        displayStatus = "Closed"
         break
       default:
         bgColor = "bg-gray-200"
+        displayStatus = status
     }
 
-    return <span className={`px-3 py-1 rounded-md text-sm ${bgColor} text-white`}>{status}</span>
+    return <span className={`px-3 py-1 rounded-md text-sm ${bgColor} text-white`}>{displayStatus}</span>
   }
 
   return (
